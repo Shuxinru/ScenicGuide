@@ -6,14 +6,18 @@ import { useSpeechSynthesis } from "../../hooks/useSpeechSynthesis";
 import { useLive2D } from "../../hooks/useLive2D";
 import { useChat } from "../../hooks/useChat";
 import { chatStore } from "../../store/chatStore";
+import { getConversationMessages } from "../../api/tourist";
+import type { Message } from "../../types/chat";
 
 export default function UserLayout() {
   const [interests, setInterests] = useState<string[]>([]);
 
-  const { messages, isThinking, sendMessage } = useChat();
+  const { messages, isThinking, sendMessage, clearMessages, setMessages } = useChat();
   const { isListening, transcript, interimTranscript, error: voiceError, start: startListen, stop: stopListen, clearTranscript, supported: voiceSupported } = useSpeechRecognition();
   const { isSpeaking, playState, activeMessageId, speak, pause, resume, stop: stopSpeak, supported: ttsSupported } = useSpeechSynthesis();
   const { mouthOpen, expression, setMouthByChar, startSpeaking, stopSpeaking, setEmotion } = useLive2D();
+
+  const conversationId = chatStore((s) => s.conversationId);
 
   // Handle voice toggle
   const handleMicToggle = useCallback(() => {
@@ -24,7 +28,7 @@ export default function UserLayout() {
     }
   }, [isListening, startListen, stopListen]);
 
-  // Handle sending messages (text or voice) — no longer auto-speaks
+  // Handle sending messages (text or voice)
   const handleSend = useCallback(
     async (text: string) => {
       stopSpeak();
@@ -38,7 +42,6 @@ export default function UserLayout() {
         chatStore.getState().setConversationId(result.conversationId);
       }
 
-      // Determine emotion based on response
       const content = result.content;
       if (content.includes("欢迎") || content.includes("高兴")) {
         setEmotion("happy");
@@ -47,6 +50,38 @@ export default function UserLayout() {
       }
     },
     [sendMessage, stopSpeak, clearTranscript, setEmotion]
+  );
+
+  // New conversation
+  const handleNewChat = useCallback(() => {
+    stopSpeak();
+    stopSpeaking();
+    clearMessages();
+    chatStore.getState().setConversationId("");
+    setInterests([]);
+  }, [stopSpeak, stopSpeaking, clearMessages]);
+
+  // Load existing conversation
+  const handleLoadConversation = useCallback(
+    async (convId: string) => {
+      stopSpeak();
+      stopSpeaking();
+      try {
+        const data = await getConversationMessages(convId);
+        const msgs: Message[] = (data.messages || []).map((m: any) => ({
+          id: m.id,
+          role: m.role,
+          content: m.content,
+          sources: m.sources,
+          created_at: m.created_at,
+        }));
+        setMessages(msgs);
+        chatStore.getState().setConversationId(convId);
+      } catch {
+        // silently fail
+      }
+    },
+    [stopSpeak, stopSpeaking, setMessages]
   );
 
   // Handle per-message voice playback
@@ -76,7 +111,6 @@ export default function UserLayout() {
     stopSpeaking();
   }, [stopSpeak, stopSpeaking]);
 
-  // Cleanup TTS on unmount
   useEffect(() => {
     return () => {
       stopSpeak();
@@ -84,7 +118,6 @@ export default function UserLayout() {
     };
   }, [stopSpeak, stopSpeaking]);
 
-  // Update mouth open when speech ends
   useEffect(() => {
     if (!isSpeaking) {
       stopSpeaking();
@@ -116,7 +149,10 @@ export default function UserLayout() {
         <ChatPanel
           messages={messages}
           isThinking={isThinking}
+          conversationId={conversationId}
           onSend={handleSend}
+          onNewChat={handleNewChat}
+          onLoadConversation={handleLoadConversation}
           interests={interests}
           onInterestsChange={setInterests}
           isListening={isListening}

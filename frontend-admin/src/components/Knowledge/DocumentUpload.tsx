@@ -99,7 +99,7 @@ export default function DocumentUpload({ onSuccess }: DocumentUploadProps) {
         return Upload.LIST_IGNORE;
       }
 
-      setFileList([{ uid: "-1", name: file.name, status: "done" }]);
+      setFileList([{ uid: "-1", name: file.name, status: "done", originFileObj: file }]);
       return false;
     },
     fileList,

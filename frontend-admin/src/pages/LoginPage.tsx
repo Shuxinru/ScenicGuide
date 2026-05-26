@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Form, Input, Button, Card, message } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
+import { login } from "../api/auth";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
@@ -10,12 +11,13 @@ export default function LoginPage() {
   const onFinish = async (values: { username: string; password: string }) => {
     setLoading(true);
     try {
-      // For prototype, accept any credentials and store a mock token
-      localStorage.setItem("admin_token", "mock-jwt-token");
+      const res = await login(values.username, values.password);
+      localStorage.setItem("admin_token", res.access_token);
       message.success("登录成功");
       navigate("/");
-    } catch {
-      message.error("登录失败");
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      message.error(detail || "登录失败，请检查用户名和密码");
     } finally {
       setLoading(false);
     }

@@ -13,11 +13,11 @@ export default function KnowledgePage() {
 
   // Document editing state
   const [editorOpen, setEditorOpen] = useState(false);
-  const [editingDocId, setEditingDocId] = useState<number | null>(null);
+  const [editingDocId, setEditingDocId] = useState<string | null>(null);
 
   // Chunk preview state
   const [chunkDrawerOpen, setChunkDrawerOpen] = useState(false);
-  const [chunkDocId, setChunkDocId] = useState<number | null>(null);
+  const [chunkDocId, setChunkDocId] = useState<string | null>(null);
   const [chunkDocTitle, setChunkDocTitle] = useState("");
 
   const [refreshKey, setRefreshKey] = useState(0);
@@ -36,7 +36,7 @@ export default function KnowledgePage() {
   };
 
   const handleDocumentSave = async (
-    id: number,
+    id: string,
     data: { title: string; tags: string[]; content: string }
   ) => {
     await apiClient.put(`/knowledge/documents/${id}`, data);

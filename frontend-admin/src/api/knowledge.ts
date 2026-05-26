@@ -1,11 +1,11 @@
 import apiClient from "./client";
 
 export interface DocumentItem {
-  id: number;
+  id: string;
   title: string;
   file_type: string;
-  file_name: string;
-  file_size: number;
+  file_name: string | null;
+  file_size: number | null;
   status: "processing" | "completed" | "failed";
   chunk_count: number;
   tags: string[];
@@ -21,7 +21,7 @@ export interface DocumentListResponse {
 }
 
 export interface QAPair {
-  id: number;
+  id: string;
   question: string;
   answer: string;
   tags: string[];
@@ -64,11 +64,22 @@ export function getDocuments(
     .then((res) => res.data);
 }
 
-export function getDocument(id: number): Promise<DocumentItem> {
+export function getDocument(id: string): Promise<DocumentItem> {
   return apiClient.get(`/knowledge/documents/${id}`).then((res) => res.data);
 }
 
-export function deleteDocument(id: number): Promise<void> {
+export function getDocumentChunks(id: string): Promise<any[]> {
+  return apiClient.get(`/knowledge/documents/${id}/chunks`).then((res) => res.data);
+}
+
+export function updateDocument(
+  id: string,
+  data: Partial<Pick<DocumentItem, "title" | "tags"> & { content: string }>
+): Promise<DocumentItem> {
+  return apiClient.put(`/knowledge/documents/${id}`, data).then((res) => res.data);
+}
+
+export function deleteDocument(id: string): Promise<void> {
   return apiClient.delete(`/knowledge/documents/${id}`).then((res) => res.data);
 }
 
@@ -93,12 +104,12 @@ export function createQAPair(
 }
 
 export function updateQAPair(
-  id: number,
+  id: string,
   data: Partial<Pick<QAPair, "question" | "answer" | "tags" | "is_active">>
 ): Promise<QAPair> {
   return apiClient.put(`/knowledge/qa-pairs/${id}`, data).then((res) => res.data);
 }
 
-export function deleteQAPair(id: number): Promise<void> {
+export function deleteQAPair(id: string): Promise<void> {
   return apiClient.delete(`/knowledge/qa-pairs/${id}`).then((res) => res.data);
 }

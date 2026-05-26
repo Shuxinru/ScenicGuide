@@ -1,9 +1,9 @@
 import json
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func, desc, delete as sa_delete
 
 from app.core.database import get_db, async_session
 from app.schemas.chat import ChatRequest, ChatResponse
@@ -36,6 +36,22 @@ async def _get_or_create_conversation(
     )
     db.add(conv)
     await db.commit()
+
+    # Cleanup: keep only the latest 500 conversations per device
+    cleanup_result = await db.execute(
+        select(Conversation.id)
+        .where(Conversation.device_id == device_id)
+        .order_by(Conversation.created_at.desc())
+        .offset(500)
+        .limit(1000)
+    )
+    old_ids = [r[0] for r in cleanup_result.fetchall()]
+    if old_ids:
+        from sqlalchemy import delete as sa_delete
+        await db.execute(sa_delete(Message).where(Message.conversation_id.in_(old_ids)))
+        await db.execute(sa_delete(Conversation).where(Conversation.id.in_(old_ids)))
+        await db.commit()
+
     await db.refresh(conv)
     return conv
 
@@ -56,9 +72,13 @@ async def _get_conversation_history(conversation_id: str, db: AsyncSession) -> l
 
 
 @router.post("/chat/send", response_model=ChatResponse)
-async def chat_send(req: ChatRequest, db: AsyncSession = Depends(get_db)):
+async def chat_send(
+    req: ChatRequest,
+    x_device_id: str = Header(default=None, alias="X-Device-ID"),
+    db: AsyncSession = Depends(get_db),
+):
     """Send a message through the RAG pipeline and get a response."""
-    device_id = req.device_id or "anonymous"
+    device_id = req.device_id or x_device_id or "anonymous"
 
     # 1. Get or create conversation
     conv = await _get_or_create_conversation(req.conversation_id, device_id, db)
@@ -117,6 +137,80 @@ async def chat_send(req: ChatRequest, db: AsyncSession = Depends(get_db)):
             "sources": rag_result["sources"],
         },
     )
+
+
+@router.get("/chat/conversations")
+async def list_conversations(
+    x_device_id: str = Header(default=None, alias="X-Device-ID"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=500),
+    db: AsyncSession = Depends(get_db),
+):
+    """List conversations for a device, newest first."""
+    device_id = x_device_id or "anonymous"
+    offset = (page - 1) * page_size
+
+    count_result = await db.execute(
+        select(func.count(Conversation.id))
+        .where(Conversation.device_id == device_id)
+    )
+    total = count_result.scalar() or 0
+
+    result = await db.execute(
+        select(Conversation)
+        .where(Conversation.device_id == device_id)
+        .order_by(Conversation.created_at.desc())
+        .offset(offset)
+        .limit(page_size)
+    )
+    items = result.scalars().all()
+
+    def conv_to_dict(c):
+        title = c.title or f"对话 {(c.created_at or '').strftime('%m-%d %H:%M') if c.created_at else ''}"
+        return {
+            "id": c.id,
+            "title": title,
+            "message_count": c.message_count,
+            "created_at": c.created_at.isoformat() if c.created_at else "",
+        }
+
+    return {"items": [conv_to_dict(c) for c in items], "total": total, "page": page, "page_size": page_size}
+
+
+@router.get("/chat/conversations/{conv_id}/messages")
+async def get_conversation_messages(
+    conv_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get messages for a conversation."""
+    result = await db.execute(
+        select(Conversation).where(Conversation.id == conv_id)
+    )
+    conv = result.scalars().first()
+    if not conv:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    result = await db.execute(
+        select(Message)
+        .where(Message.conversation_id == conv_id)
+        .order_by(Message.created_at.asc())
+        .limit(100)
+    )
+    messages = result.scalars().all()
+
+    return {
+        "conversation_id": conv_id,
+        "messages": [
+            {
+                "id": m.id,
+                "role": m.role,
+                "content": m.content,
+                "sources": m.sources,
+                "created_at": m.created_at.isoformat() if m.created_at else "",
+            }
+            for m in messages
+        ],
+    }
 
 
 @router.websocket("/ws/chat/{conversation_id}")

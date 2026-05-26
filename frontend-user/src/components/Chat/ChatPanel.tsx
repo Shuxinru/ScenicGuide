@@ -1,9 +1,11 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import type { Message } from "../../types/chat";
 import ChatBubble from "./ChatBubble";
 import ChatInput from "./ChatInput";
 import QuickQuestions from "./QuickQuestions";
 import InterestSelector from "./InterestSelector";
+import FeedbackModal from "./FeedbackModal";
+import HistoryDrawer from "./HistoryDrawer";
 
 interface PlaybackControls {
   isSpeaking: boolean;
@@ -18,7 +20,10 @@ interface PlaybackControls {
 interface Props {
   messages: Message[];
   isThinking: boolean;
+  conversationId: string | null;
   onSend: (text: string) => void;
+  onNewChat: () => void;
+  onLoadConversation: (convId: string) => void;
   interests: string[];
   onInterestsChange: (interests: string[]) => void;
   isListening: boolean;
@@ -33,7 +38,10 @@ interface Props {
 export default function ChatPanel({
   messages,
   isThinking,
+  conversationId,
   onSend,
+  onNewChat,
+  onLoadConversation,
   interests,
   onInterestsChange,
   isListening,
@@ -45,6 +53,15 @@ export default function ChatPanel({
   playback,
 }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [ratedIds, setRatedIds] = useState<Set<string>>(new Set());
+
+  const hasRated = conversationId ? ratedIds.has(conversationId) : false;
+
+  const handleFeedbackDone = useCallback((convId: string) => {
+    setRatedIds((prev) => new Set(prev).add(convId));
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -52,6 +69,27 @@ export default function ChatPanel({
 
   return (
     <div className="chat-panel">
+      {/* Header Bar */}
+      <div className="chat-header">
+        <button className="header-btn" onClick={onNewChat} title="新建对话">
+          ＋
+        </button>
+        <span className="header-title">AI 导览助手</span>
+        <div className="header-actions">
+          <button className="header-btn" onClick={() => setHistoryOpen(true)} title="历史对话">
+            ☰
+          </button>
+          <button
+            className={`header-btn feedback-btn ${hasRated ? "rated" : ""}`}
+            onClick={() => setFeedbackOpen(true)}
+            title={hasRated ? "已评价" : "评价反馈"}
+            disabled={hasRated}
+          >
+            {hasRated ? "★" : "☆"}
+          </button>
+        </div>
+      </div>
+
       {messages.length === 0 && (
         <div className="welcome-section">
           <h2>您好！</h2>
@@ -60,6 +98,7 @@ export default function ChatPanel({
           <QuickQuestions onSelect={onSend} />
         </div>
       )}
+
       <div className="messages-list">
         {messages.map((msg) => (
           <ChatBubble
@@ -83,6 +122,7 @@ export default function ChatPanel({
         )}
         <div ref={bottomRef} />
       </div>
+
       <ChatInput
         onSend={onSend}
         disabled={isThinking}
@@ -92,6 +132,19 @@ export default function ChatPanel({
         onMicToggle={onMicToggle}
         voiceSupported={voiceSupported}
         voiceError={voiceError}
+      />
+
+      <FeedbackModal
+        open={feedbackOpen}
+        conversationId={conversationId}
+        onClose={() => setFeedbackOpen(false)}
+        onDone={handleFeedbackDone}
+      />
+
+      <HistoryDrawer
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        onSelect={onLoadConversation}
       />
     </div>
   );

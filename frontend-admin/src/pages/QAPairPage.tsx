@@ -47,7 +47,7 @@ export default function QAPairPage() {
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [modalLoading, setModalLoading] = useState(false);
   const [form] = Form.useForm();
 
@@ -86,7 +86,7 @@ export default function QAPairPage() {
     setModalOpen(true);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     try {
       await deleteQAPair(id);
       message.success("已删除");

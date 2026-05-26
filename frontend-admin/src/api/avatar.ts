@@ -1,10 +1,10 @@
 import apiClient from "./client";
 
 export interface AvatarConfig {
-  id: number;
-  style: "古风" | "现代" | "卡通";
-  model_file: string;
-  greeting_message: string;
+  id: string;
+  style: string;
+  model_path: string | null;
+  greeting_msg: string;
   persona_prompt: string;
   tone: "friendly" | "professional" | "humorous";
   voice_name: string;

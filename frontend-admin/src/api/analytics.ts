@@ -1,39 +1,25 @@
 import apiClient from "./client";
 
 export interface DashboardSummary {
-  total_visitors: number;
-  total_questions: number;
+  visitors_today: number;
+  questions_today: number;
   avg_satisfaction: number;
   active_documents: number;
-  today_visitors: number;
-  today_questions: number;
-  positive_rate: number;
-  neutral_rate: number;
-  negative_rate: number;
 }
 
 export interface VisitorTrendItem {
   date: string;
-  count: number;
+  visitors: number;
 }
 
 export interface PopularQuestion {
   question: string;
   count: number;
-  rank: number;
 }
 
 export interface PeakTimeItem {
-  day_of_week: number;
   hour: number;
   count: number;
-  day_name: string;
-}
-
-export interface SentimentData {
-  positive: number;
-  neutral: number;
-  negative: number;
 }
 
 export interface ConversationVolumeItem {
@@ -46,18 +32,17 @@ export function getDashboardSummary(
   dateTo?: string
 ): Promise<DashboardSummary> {
   return apiClient
-    .get("/analytics/dashboard-summary", { params: { date_from: dateFrom, date_to: dateTo } })
+    .get("/analytics/dashboard/summary", { params: { date_from: dateFrom, date_to: dateTo } })
     .then((res) => res.data);
 }
 
 export function getVisitorTrend(
   dateFrom?: string,
-  dateTo?: string,
-  granularity: "day" | "week" | "month" = "day"
+  dateTo?: string
 ): Promise<VisitorTrendItem[]> {
   return apiClient
-    .get("/analytics/visitor-trend", {
-      params: { date_from: dateFrom, date_to: dateTo, granularity },
+    .get("/analytics/dashboard/visitor-trend", {
+      params: { date_from: dateFrom, date_to: dateTo },
     })
     .then((res) => res.data);
 }
@@ -68,7 +53,7 @@ export function getPopularQuestions(
   limit: number = 10
 ): Promise<PopularQuestion[]> {
   return apiClient
-    .get("/analytics/popular-questions", {
+    .get("/analytics/dashboard/popular-questions", {
       params: { date_from: dateFrom, date_to: dateTo, limit },
     })
     .then((res) => res.data);
@@ -79,7 +64,7 @@ export function getPeakTimes(
   dateTo?: string
 ): Promise<PeakTimeItem[]> {
   return apiClient
-    .get("/analytics/peak-times", {
+    .get("/analytics/dashboard/peak-times", {
       params: { date_from: dateFrom, date_to: dateTo },
     })
     .then((res) => res.data);
@@ -88,9 +73,9 @@ export function getPeakTimes(
 export function getSentiment(
   dateFrom?: string,
   dateTo?: string
-): Promise<SentimentData> {
+): Promise<any> {
   return apiClient
-    .get("/analytics/sentiment", {
+    .get("/analytics/dashboard/sentiment", {
       params: { date_from: dateFrom, date_to: dateTo },
     })
     .then((res) => res.data);
@@ -101,7 +86,7 @@ export function getConversationVolume(
   dateTo?: string
 ): Promise<ConversationVolumeItem[]> {
   return apiClient
-    .get("/analytics/conversation-volume", {
+    .get("/analytics/dashboard/conversation-volume", {
       params: { date_from: dateFrom, date_to: dateTo },
     })
     .then((res) => res.data);

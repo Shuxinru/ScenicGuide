@@ -2,10 +2,10 @@ import { create } from "zustand";
 
 interface ChatState {
   conversationId: string | null;
-  setConversationId: (id: string) => void;
+  setConversationId: (id: string | null) => void;
 }
 
 export const chatStore = create<ChatState>((set) => ({
   conversationId: null,
-  setConversationId: (id: string) => set({ conversationId: id }),
+  setConversationId: (id: string | null) => set({ conversationId: id }),
 }));

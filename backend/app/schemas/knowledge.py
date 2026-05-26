@@ -1,16 +1,23 @@
 from datetime import datetime
 from pydantic import BaseModel
+from typing import TypeVar, Generic
+
+T = TypeVar("T")
 
 
-class DocumentIn(BaseModel):
-    title: str
-    tags: list[str] = []
+class PaginatedResponse(BaseModel, Generic[T]):
+    items: list[T]
+    total: int
+    page: int
+    page_size: int
 
 
 class DocumentOut(BaseModel):
     id: str
     title: str
     file_type: str
+    file_name: str | None = None
+    file_size: int | None = None
     status: str
     chunk_count: int
     tags: list
@@ -46,7 +53,7 @@ class QAPairOut(BaseModel):
     id: str
     question: str
     answer: str
-    question_key: str | None
+    question_key: str | None = None
     tags: list
     usage_count: int
     is_active: bool

@@ -4,6 +4,7 @@ from sqlalchemy import text as sa_text, func, select, cast, Date
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.analytics import AnalyticsEvent
+from app.models.conversation import Conversation
 from app.models.feedback import Feedback
 from app.models.knowledge import KnowledgeDocument
 
@@ -16,10 +17,10 @@ async def get_dashboard_summary(
     """Get dashboard summary: today's visitors, questions, avg satisfaction, active docs."""
     today = date.today()
 
-    # Visitors today (distinct device_ids with chat events today)
+    # Visitors today (distinct device_ids that started conversations today)
     result = await db.execute(
-        select(func.count(func.distinct(AnalyticsEvent.device_id)))
-        .where(func.date(AnalyticsEvent.created_at) == today)
+        select(func.count(func.distinct(Conversation.device_id)))
+        .where(func.date(Conversation.created_at) == today)
     )
     visitors_today = result.scalar() or 0
 

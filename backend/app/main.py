@@ -14,6 +14,7 @@ import app.models.feedback  # noqa
 import app.models.avatar  # noqa
 import app.models.analytics  # noqa
 import app.models.admin  # noqa
+import app.models.settings  # noqa
 
 
 @asynccontextmanager

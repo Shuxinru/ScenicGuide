@@ -57,5 +57,5 @@ export function useChat() {
     setMessages([]);
   }, []);
 
-  return { messages, isThinking, sendMessage, clearMessages };
+  return { messages, isThinking, sendMessage, clearMessages, setMessages };
 }

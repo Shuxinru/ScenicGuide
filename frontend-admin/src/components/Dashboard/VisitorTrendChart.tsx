@@ -18,7 +18,7 @@ export default function VisitorTrendChart({
 
   useEffect(() => {
     setLoading(true);
-    getVisitorTrend(dateFrom, dateTo, "day")
+    getVisitorTrend(dateFrom, dateTo)
       .then((res) => setData(res))
       .catch(() => setData([]))
       .finally(() => setLoading(false));
@@ -64,7 +64,7 @@ export default function VisitorTrendChart({
         name: "游客数",
         type: "line",
         smooth: true,
-        data: data.map((item) => item.count),
+        data: data.map((item) => item.visitors),
         lineStyle: { color: "#1677ff", width: 2 },
         areaStyle: {
           color: {

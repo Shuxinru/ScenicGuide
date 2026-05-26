@@ -17,7 +17,7 @@ interface ChunkData {
 
 interface ChunkPreviewProps {
   open: boolean;
-  documentId: number | null;
+  documentId: string | null;
   documentTitle?: string;
   onClose: () => void;
 }

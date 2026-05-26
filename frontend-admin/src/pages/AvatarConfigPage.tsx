@@ -44,7 +44,7 @@ export default function AvatarConfigPage() {
       setConfig(data);
       form.setFieldsValue({
         style: data.style || "现代",
-        greeting_message: data.greeting_message || "",
+        greeting_msg: data.greeting_msg || "",
         persona_prompt: data.persona_prompt || "",
         tone: data.tone || "friendly",
         voice_name: data.voice_name || "",
@@ -79,7 +79,7 @@ export default function AvatarConfigPage() {
   };
 
   const uploadProps: UploadProps = {
-    name: "model_file",
+    name: "model_path",
     accept: ".model3.json",
     maxCount: 1,
     beforeUpload: (file) => {
@@ -92,9 +92,9 @@ export default function AvatarConfigPage() {
     customRequest: async (options) => {
       const { file, onSuccess, onError } = options as any;
       const formData = new FormData();
-      formData.append("model_file", file as File);
+      formData.append("model_path", file as File);
       try {
-        await updateAvatarConfig({ model_file: (file as File).name } as any);
+        await updateAvatarConfig({ model_path: (file as File).name } as any);
         (onSuccess as Function)?.("ok");
         message.success("模型文件上传成功");
         fetchConfig();
@@ -173,7 +173,7 @@ export default function AvatarConfigPage() {
                 <Text strong>{config?.style || "未设置"}</Text>
               </Descriptions.Item>
               <Descriptions.Item label="欢迎语">
-                <Text>{config?.greeting_message || "未设置"}</Text>
+                <Text>{config?.greeting_msg || "未设置"}</Text>
               </Descriptions.Item>
               <Descriptions.Item label="语气风格">
                 <Text>
@@ -239,7 +239,7 @@ export default function AvatarConfigPage() {
             </Radio.Group>
           </Form.Item>
 
-          <Form.Item name="model_file" label="模型文件 (.model3.json)">
+          <Form.Item name="model_path" label="模型文件 (.model3.json)">
             <Upload {...uploadProps}>
               <Button icon={<UploadOutlined />}>上传模型文件</Button>
             </Upload>
@@ -248,7 +248,7 @@ export default function AvatarConfigPage() {
           <Divider orientation="left">对话设置</Divider>
 
           <Form.Item
-            name="greeting_message"
+            name="greeting_msg"
             label="欢迎语"
             rules={[{ required: true, message: "请输入欢迎语" }]}
           >

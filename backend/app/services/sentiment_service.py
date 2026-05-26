@@ -53,28 +53,67 @@ async def generate_report(
     date_from: str | None = None,
     date_to: str | None = None,
 ) -> dict:
-    """Generate sentiment breakdown, trends, top keywords, and improvement suggestions."""
+    """Generate a complete feedback report with rates, distributions, trends, and AI insights."""
 
-    # Sentiment breakdown
-    base_query = select(
+    # Build shared date filter
+    def apply_date_filter(query, col=Feedback.created_at):
+        if date_from:
+            query = query.where(func.date(col) >= date_from)
+        if date_to:
+            query = query.where(func.date(col) <= date_to)
+        return query
+
+    # Total count and avg rating
+    count_query = select(func.count(Feedback.id), func.avg(Feedback.rating))
+    count_query = apply_date_filter(count_query)
+    result = await db.execute(count_query)
+    total_feedback, avg_rating = result.fetchone()
+    total_feedback = total_feedback or 0
+    avg_rating = round(float(avg_rating), 2) if avg_rating else 0.0
+
+    # Sentiment counts for rates
+    sent_query = select(
         Feedback.sentiment,
         func.count(Feedback.id).label("count"),
-        func.avg(Feedback.sentiment_score).label("avg_score"),
     ).group_by(Feedback.sentiment)
-
-    if date_from:
-        base_query = base_query.where(func.date(Feedback.created_at) >= date_from)
-    if date_to:
-        base_query = base_query.where(func.date(Feedback.created_at) <= date_to)
-
-    result = await db.execute(base_query)
-    breakdown = {}
+    sent_query = apply_date_filter(sent_query)
+    result = await db.execute(sent_query)
+    sentiment_counts = {"positive": 0, "neutral": 0, "negative": 0}
     for r in result.fetchall():
-        sentiment = r.sentiment or "neutral"
-        breakdown[sentiment] = {
-            "count": r.count,
-            "avg_score": round(float(r.avg_score) if r.avg_score else 0.0, 2),
-        }
+        label = r.sentiment or "neutral"
+        sentiment_counts[label] = r.count
+
+    positive_rate = round(sentiment_counts["positive"] / total_feedback, 4) if total_feedback else 0
+    neutral_rate = round(sentiment_counts["neutral"] / total_feedback, 4) if total_feedback else 0
+    negative_rate = round(sentiment_counts["negative"] / total_feedback, 4) if total_feedback else 0
+
+    # Rating distribution (count per rating 1-5)
+    dist_query = select(
+        Feedback.rating,
+        func.count(Feedback.id).label("count"),
+    ).group_by(Feedback.rating)
+    dist_query = apply_date_filter(dist_query)
+    result = await db.execute(dist_query)
+    dist_map = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+    for r in result.fetchall():
+        if r.rating in dist_map:
+            dist_map[r.rating] = r.count
+    rating_distribution = [{"rating": k, "count": v} for k, v in dist_map.items()]
+
+    # Top keywords
+    kw_query = (
+        select(Feedback.keywords)
+        .where(Feedback.keywords != None)
+        .order_by(Feedback.created_at.desc())
+        .limit(100)
+    )
+    kw_query = apply_date_filter(kw_query)
+    result = await db.execute(kw_query)
+    keyword_freq = {}
+    for r in result.fetchall():
+        for kw in (r[0] or []):
+            keyword_freq[kw] = keyword_freq.get(kw, 0) + 1
+    top_keywords = [kw for kw, _ in sorted(keyword_freq.items(), key=lambda x: x[1], reverse=True)[:15]]
 
     # Daily sentiment trend
     trend_query = (
@@ -87,65 +126,24 @@ async def generate_report(
         .order_by(func.date(Feedback.created_at).desc())
         .limit(30)
     )
-
-    if date_from:
-        trend_query = trend_query.where(func.date(Feedback.created_at) >= date_from)
-    if date_to:
-        trend_query = trend_query.where(func.date(Feedback.created_at) <= date_to)
-
+    trend_query = apply_date_filter(trend_query)
     result = await db.execute(trend_query)
-    trend_data = []
+    sentiment_trend = []
     for r in result.fetchall():
-        trend_data.append({
+        sentiment_trend.append({
             "date": str(r.date),
-            "sentiment": r.sentiment,
+            "sentiment": r.sentiment or "neutral",
             "count": r.count,
         })
 
-    # Top keywords
-    keyword_query = (
-        select(Feedback.keywords)
-        .where(Feedback.keywords != None)
-        .order_by(Feedback.created_at.desc())
-        .limit(100)
-    )
-
-    if date_from:
-        keyword_query = keyword_query.where(func.date(Feedback.created_at) >= date_from)
-    if date_to:
-        keyword_query = keyword_query.where(func.date(Feedback.created_at) <= date_to)
-
-    result = await db.execute(keyword_query)
-    keyword_counts = {}
-    for r in result.fetchall():
-        for kw in (r[0] or []):
-            keyword_counts[kw] = keyword_counts.get(kw, 0) + 1
-
-    top_keywords = sorted(keyword_counts.items(), key=lambda x: x[1], reverse=True)[:20]
-
-    # Average rating
-    rating_query = select(func.avg(Feedback.rating))
-    if date_from:
-        rating_query = rating_query.where(func.date(Feedback.created_at) >= date_from)
-    if date_to:
-        rating_query = rating_query.where(func.date(Feedback.created_at) <= date_to)
-
-    result = await db.execute(rating_query)
-    avg_rating = result.scalar()
-    avg_rating = round(float(avg_rating), 2) if avg_rating else 0.0
-
-    # Improvement suggestions based on negative feedback
-    suggestions_query = select(Feedback.comment).where(
+    # Improvement suggestions from negative feedback
+    neg_query = select(Feedback.comment).where(
         Feedback.sentiment == "negative",
         Feedback.comment != None,
         Feedback.comment != "",
     )
-    if date_from:
-        suggestions_query = suggestions_query.where(func.date(Feedback.created_at) >= date_from)
-    if date_to:
-        suggestions_query = suggestions_query.where(func.date(Feedback.created_at) <= date_to)
-
-    result = await db.execute(suggestions_query.limit(20))
+    neg_query = apply_date_filter(neg_query)
+    result = await db.execute(neg_query.limit(20))
     negative_comments = [r[0] for r in result.fetchall() if r[0]]
 
     suggestions = []
@@ -161,16 +159,45 @@ async def generate_report(
                 {"role": "user", "content": prompt},
             ]
             response = await llm_service.generate(msgs, temperature=0.3, max_tokens=256)
-            suggestions = json.loads(response.strip())
-            if not isinstance(suggestions, list):
-                suggestions = []
+            parsed = json.loads(response.strip())
+            if isinstance(parsed, list):
+                suggestions = parsed
         except Exception:
-            suggestions = []
+            pass
 
+    # AI insights summary
+    insights = ""
+    if total_feedback > 0:
+        insight_prompt = (
+            f"根据以下景区导览服务的游客反馈数据，请生成一段200字以内的智能分析报告，"
+            f"包含整体评价趋势、主要关注点和改进方向：\n"
+            f"总反馈数: {total_feedback}, 平均评分: {avg_rating}/5, "
+            f"好评率: {round(positive_rate*100,1)}%, 差评率: {round(negative_rate*100,1)}%, "
+            f"热门关键词: {', '.join(top_keywords[:10])}"
+        )
+        try:
+            msgs = [
+                {"role": "system", "content": "你是一个景区服务质量数据分析师，请用中文回复，不使用markdown格式。"},
+                {"role": "user", "content": insight_prompt},
+            ]
+            insights = await llm_service.generate(msgs, temperature=0.5, max_tokens=400)
+            insights = insights.strip()
+        except Exception:
+            insights = "暂无足够数据生成AI分析报告。"
+
+    from datetime import datetime
     return {
-        "sentiment_breakdown": breakdown,
-        "sentiment_trend": trend_data,
-        "top_keywords": [{"keyword": kw, "count": cnt} for kw, cnt in top_keywords],
+        "total_feedback": total_feedback,
         "avg_rating": avg_rating,
+        "positive_rate": positive_rate,
+        "neutral_rate": neutral_rate,
+        "negative_rate": negative_rate,
+        "rating_distribution": rating_distribution,
+        "top_keywords": top_keywords,
+        "insights": insights,
+        "sentiment_trend": sentiment_trend,
         "improvement_suggestions": suggestions,
+        "date_from": date_from or "",
+        "date_to": date_to or "",
+        "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }

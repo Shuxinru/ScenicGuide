@@ -6,9 +6,9 @@ const { TextArea } = Input;
 
 interface DocumentEditorProps {
   open: boolean;
-  documentId: number | null;
+  documentId: string | null;
   onClose: () => void;
-  onSave: (id: number, data: { title: string; tags: string[]; content: string }) => Promise<void>;
+  onSave: (id: string, data: { title: string; tags: string[]; content: string }) => Promise<void>;
 }
 
 export default function DocumentEditor({

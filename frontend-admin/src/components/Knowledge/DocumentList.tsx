@@ -74,7 +74,7 @@ export default function DocumentList({
     fetchDocuments();
   }, [fetchDocuments]);
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     try {
       await deleteDocument(id);
       message.success("文档已删除");

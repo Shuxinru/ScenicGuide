@@ -11,7 +11,6 @@ import {
   VisitorTrendItem,
   PopularQuestion,
   PeakTimeItem,
-  SentimentData,
   ConversationVolumeItem,
 } from "../api/analytics";
 
@@ -31,7 +30,7 @@ export interface UseDashboardReturn {
   peakTimes: PeakTimeItem[];
   peakTimesLoading: boolean;
 
-  sentiment: SentimentData | null;
+  sentiment: any;
   sentimentLoading: boolean;
 
   conversationVolume: ConversationVolumeItem[];
@@ -63,7 +62,7 @@ export default function useDashboard(
   const [peakTimes, setPeakTimes] = useState<PeakTimeItem[]>([]);
   const [peakTimesLoading, setPeakTimesLoading] = useState(true);
 
-  const [sentiment, setSentiment] = useState<SentimentData | null>(null);
+  const [sentiment, setSentiment] = useState<any>(null);
   const [sentimentLoading, setSentimentLoading] = useState(true);
 
   const [conversationVolume, setConversationVolume] = useState<
@@ -92,7 +91,7 @@ export default function useDashboard(
       .catch(() => setSummary(null))
       .finally(() => setSummaryLoading(false));
 
-    const visitorTrendPromise = getVisitorTrend(dateFrom, dateTo, "day")
+    const visitorTrendPromise = getVisitorTrend(dateFrom, dateTo)
       .then((data) => setVisitorTrend(data))
       .catch(() => setVisitorTrend([]))
       .finally(() => setVisitorTrendLoading(false));
