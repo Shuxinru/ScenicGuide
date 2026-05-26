@@ -1,0 +1,14 @@
+{
+  "name": "ai-digital-human-platform",
+  "private": true,
+  "workspaces": [
+    "frontend-user",
+    "frontend-admin"
+  ],
+  "scripts": {
+    "dev:user": "npm -w frontend-user run dev",
+    "dev:admin": "npm -w frontend-admin run dev",
+    "build:user": "npm -w frontend-user run build",
+    "build:admin": "npm -w frontend-admin run build"
+  }
+}
