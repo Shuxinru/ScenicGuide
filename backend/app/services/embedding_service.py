@@ -1,17 +1,19 @@
-from app.services.llm_service import llm_service
+from sentence_transformers import SentenceTransformer
 
 
 class EmbeddingService:
-    """Wraps the LLM embedding API for text and query embedding."""
+    """Local embedding service using Sentence Transformers."""
 
-    async def embed_texts(self, texts: list[str]) -> list[list[float]]:
-        """Generate embeddings for a list of texts."""
-        return await llm_service.generate_embedding(texts)
+    def __init__(self):
+        self.model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
 
-    async def embed_query(self, text: str) -> list[float]:
-        """Generate an embedding for a single query string."""
-        results = await llm_service.generate_embedding(text)
-        return results[0]
+    def embed_texts(self, texts: list[str]) -> list[list[float]]:
+        embeddings = self.model.encode(texts, normalize_embeddings=True)
+        return embeddings.tolist()
+
+    def embed_query(self, text: str) -> list[float]:
+        embedding = self.model.encode([text], normalize_embeddings=True)
+        return embedding[0].tolist()
 
 
 embedding_service = EmbeddingService()

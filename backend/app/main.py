@@ -4,8 +4,16 @@ from fastapi import FastAPI
 
 from app.api.router import api_router
 from app.core.security import setup_cors
-from app.core.database import check_db_connection
+from app.core.database import check_db_connection, engine, Base
 from app.config import settings
+
+# Import all models so Base.metadata.create_all can create tables
+import app.models.knowledge  # noqa
+import app.models.conversation  # noqa
+import app.models.feedback  # noqa
+import app.models.avatar  # noqa
+import app.models.analytics  # noqa
+import app.models.admin  # noqa
 
 
 @asynccontextmanager
@@ -13,6 +21,9 @@ async def lifespan(app: FastAPI):
     db_ok = await check_db_connection()
     if db_ok:
         print(f"[OK] MySQL connected: {settings.db_host}:{settings.db_port}/{settings.db_name}")
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        print(f"[OK] Database tables verified/created")
     else:
         print(f"[WARN] MySQL connection failed. Check .env config.")
     yield

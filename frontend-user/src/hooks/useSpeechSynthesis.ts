@@ -1,14 +1,22 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 
+type PlayState = "idle" | "playing" | "paused";
+
 interface UseSpeechSynthesisReturn {
   isSpeaking: boolean;
-  speak: (text: string, onBoundary?: (charIndex: number) => void) => void;
+  playState: PlayState;
+  activeMessageId: string | null;
+  speak: (text: string, messageId: string, onBoundary?: (charIndex: number) => void) => void;
+  pause: () => void;
+  resume: () => void;
   stop: () => void;
   supported: boolean;
 }
 
 export function useSpeechSynthesis(): UseSpeechSynthesisReturn {
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [playState, setPlayState] = useState<PlayState>("idle");
+  const [activeMessageId, setActiveMessageId] = useState<string | null>(null);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const supported = typeof window !== "undefined" && "speechSynthesis" in window;
 
@@ -17,12 +25,16 @@ export function useSpeechSynthesis(): UseSpeechSynthesisReturn {
       window.speechSynthesis.cancel();
     }
     setIsSpeaking(false);
+    setPlayState("idle");
+    setActiveMessageId(null);
+    utteranceRef.current = null;
   }, [supported]);
 
   const speak = useCallback(
-    (text: string, onBoundary?: (charIndex: number) => void) => {
+    (text: string, messageId: string, onBoundary?: (charIndex: number) => void) => {
       if (!supported) return;
 
+      // Cancel any current speech
       window.speechSynthesis.cancel();
 
       // Clean text: remove markdown, emojis
@@ -56,20 +68,40 @@ export function useSpeechSynthesis(): UseSpeechSynthesisReturn {
 
       utterance.onend = () => {
         setIsSpeaking(false);
+        setPlayState("idle");
+        setActiveMessageId(null);
         utteranceRef.current = null;
       };
 
       utterance.onerror = () => {
         setIsSpeaking(false);
+        setPlayState("idle");
+        setActiveMessageId(null);
         utteranceRef.current = null;
       };
 
       utteranceRef.current = utterance;
       setIsSpeaking(true);
+      setPlayState("playing");
+      setActiveMessageId(messageId);
       window.speechSynthesis.speak(utterance);
     },
     [supported]
   );
+
+  const pause = useCallback(() => {
+    if (supported && playState === "playing") {
+      window.speechSynthesis.pause();
+      setPlayState("paused");
+    }
+  }, [supported, playState]);
+
+  const resume = useCallback(() => {
+    if (supported && playState === "paused") {
+      window.speechSynthesis.resume();
+      setPlayState("playing");
+    }
+  }, [supported, playState]);
 
   useEffect(() => {
     return () => {
@@ -79,5 +111,5 @@ export function useSpeechSynthesis(): UseSpeechSynthesisReturn {
     };
   }, [supported]);
 
-  return { isSpeaking, speak, stop, supported };
+  return { isSpeaking, playState, activeMessageId, speak, pause, resume, stop, supported };
 }

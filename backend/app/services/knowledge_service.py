@@ -29,7 +29,7 @@ async def ingest_document(
     chunks = split_text(parsed_text)
 
     # 3. Generate embeddings for all chunks
-    embeddings = await embedding_service.embed_texts(chunks)
+    embeddings = embedding_service.embed_texts(chunks)
 
     # 4. Store document record in MySQL
     doc_id = str(uuid.uuid4())

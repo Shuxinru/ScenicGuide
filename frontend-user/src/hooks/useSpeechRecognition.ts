@@ -7,6 +7,7 @@ interface UseSpeechRecognitionReturn {
   error: string | null;
   start: () => void;
   stop: () => void;
+  clearTranscript: () => void;
   supported: boolean;
 }
 
@@ -85,5 +86,10 @@ export function useSpeechRecognition(): UseSpeechRecognitionReturn {
     };
   }, []);
 
-  return { isListening, transcript, interimTranscript, error, start, stop, supported };
+  const clearTranscript = useCallback(() => {
+    setTranscript("");
+    setInterimTranscript("");
+  }, []);
+
+  return { isListening, transcript, interimTranscript, error, start, stop, clearTranscript, supported };
 }

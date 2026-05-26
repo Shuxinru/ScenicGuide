@@ -34,12 +34,18 @@ export function useChat() {
       setIsThinking(false);
 
       return { content: data.message.content, sources: data.message.sources, conversationId: data.conversation_id };
-    } catch {
+    } catch (err: any) {
       setIsThinking(false);
+      let errorText = "抱歉，我暂时无法回答这个问题。";
+      if (err?.code === "ERR_NETWORK" || err?.message?.includes("Network")) {
+        errorText = "无法连接到后端服务。请确保已启动 FastAPI 服务器：\n\n```bash\ncd backend && uvicorn app.main:app --reload --port 8000\n```";
+      } else if (err?.response?.status === 500) {
+        errorText = "服务器内部错误，请检查后端日志和数据库连接。";
+      }
       const errorMsg: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: "抱歉，我暂时无法回答这个问题，请稍后再试。",
+        content: errorText,
         created_at: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, errorMsg]);

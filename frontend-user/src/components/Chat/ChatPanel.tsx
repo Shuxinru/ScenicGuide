@@ -5,6 +5,16 @@ import ChatInput from "./ChatInput";
 import QuickQuestions from "./QuickQuestions";
 import InterestSelector from "./InterestSelector";
 
+interface PlaybackControls {
+  isSpeaking: boolean;
+  playState: "idle" | "playing" | "paused";
+  activeMessageId: string | null;
+  onPlay: (messageId: string, content: string) => void;
+  onPause: () => void;
+  onResume: () => void;
+  onStop: () => void;
+}
+
 interface Props {
   messages: Message[];
   isThinking: boolean;
@@ -17,6 +27,7 @@ interface Props {
   onMicToggle: () => void;
   voiceSupported: boolean;
   voiceError: string | null;
+  playback: PlaybackControls;
 }
 
 export default function ChatPanel({
@@ -31,6 +42,7 @@ export default function ChatPanel({
   onMicToggle,
   voiceSupported,
   voiceError,
+  playback,
 }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -50,7 +62,17 @@ export default function ChatPanel({
       )}
       <div className="messages-list">
         {messages.map((msg) => (
-          <ChatBubble key={msg.id} message={msg} />
+          <ChatBubble
+            key={msg.id}
+            message={msg}
+            isSpeaking={playback.isSpeaking}
+            playState={playback.playState}
+            isActive={playback.activeMessageId === msg.id}
+            onPlay={playback.onPlay}
+            onPause={playback.onPause}
+            onResume={playback.onResume}
+            onStop={playback.onStop}
+          />
         ))}
         {isThinking && (
           <div className="thinking-bubble">

@@ -11,8 +11,8 @@ export default function UserLayout() {
   const [interests, setInterests] = useState<string[]>([]);
 
   const { messages, isThinking, sendMessage } = useChat();
-  const { isListening, transcript, interimTranscript, error: voiceError, start: startListen, stop: stopListen, supported: voiceSupported } = useSpeechRecognition();
-  const { isSpeaking, speak, stop: stopSpeak, supported: ttsSupported } = useSpeechSynthesis();
+  const { isListening, transcript, interimTranscript, error: voiceError, start: startListen, stop: stopListen, clearTranscript, supported: voiceSupported } = useSpeechRecognition();
+  const { isSpeaking, playState, activeMessageId, speak, pause, resume, stop: stopSpeak, supported: ttsSupported } = useSpeechSynthesis();
   const { mouthOpen, expression, setMouthByChar, startSpeaking, stopSpeaking, setEmotion } = useLive2D();
 
   // Handle voice toggle
@@ -24,10 +24,11 @@ export default function UserLayout() {
     }
   }, [isListening, startListen, stopListen]);
 
-  // Handle sending messages (text or voice)
+  // Handle sending messages (text or voice) — no longer auto-speaks
   const handleSend = useCallback(
     async (text: string) => {
       stopSpeak();
+      clearTranscript();
       const convId = chatStore.getState().conversationId;
 
       const result = await sendMessage(text, convId);
@@ -44,17 +45,36 @@ export default function UserLayout() {
       } else if (content.includes("抱歉") || content.includes("对不起")) {
         setEmotion("sorry");
       }
-
-      // Speak the response
-      if (ttsSupported) {
-        startSpeaking();
-        speak(content, (charIndex) => {
-          setMouthByChar(charIndex);
-        });
-      }
     },
-    [sendMessage, speak, stopSpeak, startSpeaking, setMouthByChar, setEmotion, ttsSupported]
+    [sendMessage, stopSpeak, clearTranscript, setEmotion]
   );
+
+  // Handle per-message voice playback
+  const handlePlay = useCallback(
+    (messageId: string, content: string) => {
+      startSpeaking();
+      setEmotion("happy");
+      speak(content, messageId, (charIndex: number) => {
+        setMouthByChar(charIndex);
+      });
+    },
+    [speak, startSpeaking, setMouthByChar, setEmotion]
+  );
+
+  const handlePause = useCallback(() => {
+    pause();
+    stopSpeaking();
+  }, [pause, stopSpeaking]);
+
+  const handleResume = useCallback(() => {
+    resume();
+    startSpeaking();
+  }, [resume, startSpeaking]);
+
+  const handleStop = useCallback(() => {
+    stopSpeak();
+    stopSpeaking();
+  }, [stopSpeak, stopSpeaking]);
 
   // Cleanup TTS on unmount
   useEffect(() => {
@@ -70,6 +90,16 @@ export default function UserLayout() {
       stopSpeaking();
     }
   }, [isSpeaking, stopSpeaking]);
+
+  const playback = {
+    isSpeaking,
+    playState,
+    activeMessageId,
+    onPlay: handlePlay,
+    onPause: handlePause,
+    onResume: handleResume,
+    onStop: handleStop,
+  };
 
   return (
     <div className="user-layout">
@@ -95,6 +125,7 @@ export default function UserLayout() {
           onMicToggle={handleMicToggle}
           voiceSupported={voiceSupported}
           voiceError={voiceError}
+          playback={playback}
         />
       </div>
     </div>

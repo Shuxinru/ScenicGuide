@@ -2,20 +2,40 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    # MySQL Database
+    # MySQL Database — use DATABASE_URL directly, or set individual fields
+    database_url: str = ""
     db_host: str = "localhost"
     db_port: int = 3306
     db_user: str = "root"
     db_password: str = ""
-    db_name: str = "scenic_guide"
+    db_name: str = "tour_guide"
 
     @property
-    def database_url(self) -> str:
-        return f"mysql+aiomysql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
+    def async_database_url(self) -> str:
+        if self.database_url:
+            # Replace pymysql with aiomysql for async
+            url = self.database_url
+            if url.startswith("mysql+pymysql://"):
+                url = url.replace("mysql+pymysql://", "mysql+aiomysql://", 1)
+            elif url.startswith("mysql://"):
+                url = url.replace("mysql://", "mysql+aiomysql://", 1)
+            # Ensure charset for Chinese support
+            if "charset" not in url:
+                sep = "&" if "?" in url else "?"
+                url += f"{sep}charset=utf8mb4"
+            return url
+        url = f"mysql+aiomysql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}?charset=utf8mb4"
+        return url
 
     @property
-    def database_url_sync(self) -> str:
-        return f"mysql+pymysql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
+    def sync_database_url(self) -> str:
+        if self.database_url:
+            url = self.database_url
+            if "charset" not in url:
+                sep = "&" if "?" in url else "?"
+                url += f"{sep}charset=utf8mb4"
+            return url
+        return f"mysql+pymysql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}?charset=utf8mb4"
 
     # DeepSeek API (OpenAI-compatible)
     llm_api_base: str = "https://api.deepseek.com/v1"

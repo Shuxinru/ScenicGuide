@@ -246,6 +246,36 @@ html, body, #root {
   margin-left: 4px;
 }
 
+/* Bubble voice playback actions */
+.bubble-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+  padding-left: 4px;
+}
+
+.action-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  line-height: 1.4;
+}
+
+.action-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.action-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
 /* Thinking indicator */
 .thinking-bubble {
   display: flex;
