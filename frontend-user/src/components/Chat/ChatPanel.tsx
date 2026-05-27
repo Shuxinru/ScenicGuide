@@ -82,8 +82,7 @@ export default function ChatPanel({
           <button
             className={`header-btn feedback-btn ${hasRated ? "rated" : ""}`}
             onClick={() => setFeedbackOpen(true)}
-            title={hasRated ? "已评价" : "评价反馈"}
-            disabled={hasRated}
+            title={hasRated ? "查看/修改评价" : "评价反馈"}
           >
             {hasRated ? "★" : "☆"}
           </button>

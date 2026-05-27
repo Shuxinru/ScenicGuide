@@ -10,6 +10,22 @@ export function submitFeedback(data: FeedbackData) {
   return apiClient.post("/feedback", data).then((res) => res.data);
 }
 
+export interface FeedbackDetail {
+  id: string;
+  conversation_id: string | null;
+  device_id: string | null;
+  rating: number;
+  comment: string | null;
+  sentiment: string | null;
+  sentiment_score: number | null;
+  keywords: string[];
+  created_at: string;
+}
+
+export function getFeedback(convId: string): Promise<FeedbackDetail> {
+  return apiClient.get(`/feedback/conversation/${convId}`).then((res) => res.data);
+}
+
 export interface ConversationSummary {
   id: string;
   title: string;

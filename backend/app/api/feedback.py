@@ -18,16 +18,8 @@ async def submit_feedback(
     x_device_id: str = Header(default=None, alias="X-Device-ID"),
     db: AsyncSession = Depends(get_db),
 ):
-    """Submit a rating + comment, trigger sentiment analysis. One rating per conversation."""
+    """Submit or update a rating + comment. One rating per conversation (upsert)."""
     device_id = req.device_id or x_device_id
-
-    # Prevent duplicate ratings for the same conversation
-    if req.conversation_id:
-        existing = await db.execute(
-            select(Feedback).where(Feedback.conversation_id == req.conversation_id)
-        )
-        if existing.scalars().first():
-            raise HTTPException(status_code=409, detail="该对话已经评价过了")
 
     sentiment_result = {"sentiment": None, "score": None}
     keywords = []
@@ -38,6 +30,22 @@ async def submit_feedback(
             keywords = await extract_keywords(req.comment)
         except Exception:
             pass
+
+    if req.conversation_id:
+        existing_result = await db.execute(
+            select(Feedback).where(Feedback.conversation_id == req.conversation_id)
+        )
+        existing = existing_result.scalars().first()
+        if existing:
+            # Update existing feedback
+            existing.rating = req.rating
+            existing.comment = req.comment
+            existing.sentiment = sentiment_result.get("sentiment")
+            existing.sentiment_score = sentiment_result.get("score")
+            existing.keywords = keywords or []
+            await db.commit()
+            await db.refresh(existing)
+            return existing
 
     feedback = Feedback(
         id=str(uuid.uuid4()),
@@ -92,6 +100,21 @@ async def list_feedback(
     items = result.scalars().all()
 
     return {"items": items, "total": total, "page": page, "page_size": page_size}
+
+
+@router.get("/feedback/conversation/{conv_id}")
+async def get_conversation_feedback(
+    conv_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get existing feedback for a conversation, or 404."""
+    result = await db.execute(
+        select(Feedback).where(Feedback.conversation_id == conv_id)
+    )
+    fb = result.scalars().first()
+    if not fb:
+        raise HTTPException(status_code=404, detail="该对话尚未评价")
+    return fb
 
 
 @router.get("/feedback/report")
