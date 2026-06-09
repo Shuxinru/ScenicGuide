@@ -1,6 +1,8 @@
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from app.api.router import api_router
 from app.core.security import setup_cors
@@ -16,6 +18,9 @@ import app.models.analytics  # noqa
 import app.models.admin  # noqa
 import app.models.settings  # noqa
 
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -24,6 +29,15 @@ async def lifespan(app: FastAPI):
         print(f"[OK] MySQL connected: {settings.db_host}:{settings.db_port}/{settings.db_name}")
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+            # Add clothing_url column if upgrading from older schema
+            try:
+                await conn.execute(
+                    __import__("sqlalchemy").text(
+                        "ALTER TABLE avatar_configs ADD COLUMN clothing_url VARCHAR(500) NULL"
+                    )
+                )
+            except Exception:
+                pass  # Column already exists
         print(f"[OK] Database tables verified/created")
     else:
         print(f"[WARN] MySQL connection failed. Check .env config.")
@@ -39,6 +53,9 @@ app = FastAPI(
 
 setup_cors(app)
 app.include_router(api_router)
+
+# Serve uploaded static files
+app.mount("/api/v1/static", StaticFiles(directory=UPLOAD_DIR), name="static")
 
 
 @app.get("/api/v1/health")

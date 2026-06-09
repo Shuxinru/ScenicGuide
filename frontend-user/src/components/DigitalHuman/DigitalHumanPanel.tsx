@@ -7,6 +7,7 @@ interface Props {
   isListening: boolean;
   mouthOpen: number;
   expression: string;
+  clothingUrl: string | null;
 }
 
 export default function DigitalHumanPanel({
@@ -15,6 +16,7 @@ export default function DigitalHumanPanel({
   isListening,
   mouthOpen,
   expression,
+  clothingUrl,
 }: Props) {
   let statusText = "";
   if (isListening) statusText = "正在聆听...";
@@ -31,6 +33,7 @@ export default function DigitalHumanPanel({
           isListening={isListening}
           mouthOpen={mouthOpen}
           expression={expression}
+          clothingUrl={clothingUrl}
         />
       </div>
       <div className={`status-indicator ${isSpeaking ? "speaking" : ""} ${isThinking ? "thinking" : ""} ${isListening ? "listening" : ""}`}>

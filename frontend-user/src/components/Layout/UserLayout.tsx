@@ -7,10 +7,12 @@ import { useLive2D } from "../../hooks/useLive2D";
 import { useChat } from "../../hooks/useChat";
 import { chatStore } from "../../store/chatStore";
 import { getConversationMessages } from "../../api/tourist";
+import apiClient from "../../api/client";
 import type { Message } from "../../types/chat";
 
 export default function UserLayout() {
   const [interests, setInterests] = useState<string[]>([]);
+  const [clothingUrl, setClothingUrl] = useState<string | null>(null);
 
   const { messages, isThinking, sendMessage, clearMessages, setMessages } = useChat();
   const { isListening, transcript, interimTranscript, error: voiceError, start: startListen, stop: stopListen, clearTranscript, supported: voiceSupported } = useSpeechRecognition();
@@ -90,7 +92,7 @@ export default function UserLayout() {
       startSpeaking();
       setEmotion("happy");
       speak(content, messageId, (charIndex: number) => {
-        setMouthByChar(charIndex);
+        setMouthByChar(charIndex, content);
       });
     },
     [speak, startSpeaking, setMouthByChar, setEmotion]
@@ -124,6 +126,13 @@ export default function UserLayout() {
     }
   }, [isSpeaking, stopSpeaking]);
 
+  // Fetch clothing URL from avatar config
+  useEffect(() => {
+    apiClient.get("/avatar/config").then((res) => {
+      setClothingUrl(res.data.clothing_url || null);
+    }).catch(() => {});
+  }, []);
+
   const playback = {
     isSpeaking,
     playState,
@@ -143,6 +152,7 @@ export default function UserLayout() {
           isListening={isListening}
           mouthOpen={mouthOpen}
           expression={expression}
+          clothingUrl={clothingUrl}
         />
       </div>
       <div className="chat-section">

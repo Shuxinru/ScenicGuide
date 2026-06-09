@@ -11,6 +11,7 @@ class AvatarConfigIn(BaseModel):
     voice_name: str | None = None
     voice_speed: float | None = None
     voice_pitch: float | None = None
+    clothing_url: str | None = None
 
 
 class AvatarConfigOut(BaseModel):
@@ -23,6 +24,7 @@ class AvatarConfigOut(BaseModel):
     voice_name: str
     voice_speed: float
     voice_pitch: float
+    clothing_url: str | None = None
     created_at: datetime
     updated_at: datetime
 

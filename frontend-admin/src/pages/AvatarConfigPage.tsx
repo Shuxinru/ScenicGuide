@@ -24,9 +24,10 @@ import {
   SoundOutlined,
   SaveOutlined,
   ReloadOutlined,
+  PictureOutlined,
 } from "@ant-design/icons";
 import type { UploadProps } from "antd";
-import { getAvatarConfig, updateAvatarConfig, AvatarConfig } from "../api/avatar";
+import { getAvatarConfig, updateAvatarConfig, uploadClothingImage, AvatarConfig } from "../api/avatar";
 
 const { TextArea } = Input;
 const { Title, Text } = Typography;
@@ -35,6 +36,7 @@ export default function AvatarConfigPage() {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingClothing, setUploadingClothing] = useState(false);
   const [config, setConfig] = useState<AvatarConfig | null>(null);
 
   const fetchConfig = async () => {
@@ -76,6 +78,20 @@ export default function AvatarConfigPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleClothingUpload = async (file: File) => {
+    setUploadingClothing(true);
+    try {
+      const updated = await uploadClothingImage(file);
+      setConfig(updated);
+      message.success("服装图片上传成功");
+    } catch {
+      message.error("服装图片上传失败");
+    } finally {
+      setUploadingClothing(false);
+    }
+    return false; // Prevent default upload behavior
   };
 
   const uploadProps: UploadProps = {
@@ -172,6 +188,17 @@ export default function AvatarConfigPage() {
               <Descriptions.Item label="当前风格">
                 <Text strong>{config?.style || "未设置"}</Text>
               </Descriptions.Item>
+              <Descriptions.Item label="服装">
+                {config?.clothing_url ? (
+                  <img
+                    src={config.clothing_url}
+                    alt="服装"
+                    style={{ width: 40, height: 40, objectFit: "contain", borderRadius: 4 }}
+                  />
+                ) : (
+                  <Text type="secondary">未上传</Text>
+                )}
+              </Descriptions.Item>
               <Descriptions.Item label="欢迎语">
                 <Text>{config?.greeting_msg || "未设置"}</Text>
               </Descriptions.Item>
@@ -243,6 +270,45 @@ export default function AvatarConfigPage() {
             <Upload {...uploadProps}>
               <Button icon={<UploadOutlined />}>上传模型文件</Button>
             </Upload>
+          </Form.Item>
+
+          <Form.Item label="数字人服装图片">
+            <Space direction="vertical" style={{ width: "100%" }}>
+              <Upload
+                accept=".png,.jpg,.jpeg,.webp"
+                maxCount={1}
+                showUploadList={false}
+                beforeUpload={handleClothingUpload}
+              >
+                <Button icon={<PictureOutlined />} loading={uploadingClothing}>
+                  {config?.clothing_url ? "更换服装图片" : "上传服装图片"}
+                </Button>
+              </Upload>
+              {config?.clothing_url && (
+                <div
+                  style={{
+                    width: 120,
+                    height: 120,
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: 8,
+                    overflow: "hidden",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "rgba(255,255,255,0.04)",
+                  }}
+                >
+                  <img
+                    src={config.clothing_url}
+                    alt="服装预览"
+                    style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+                  />
+                </div>
+              )}
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                建议上传透明背景 PNG 图片，服装会自动贴合数字人身体
+              </Text>
+            </Space>
           </Form.Item>
 
           <Divider orientation="left">对话设置</Divider>

@@ -19,5 +19,6 @@ class AvatarConfig(Base):
     voice_name: Mapped[str] = mapped_column(String(50), default="zh-CN-XiaoxiaoNeural")
     voice_speed: Mapped[float] = mapped_column(Float, default=1.0)
     voice_pitch: Mapped[float] = mapped_column(Float, default=1.0)
+    clothing_url: Mapped[str] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
