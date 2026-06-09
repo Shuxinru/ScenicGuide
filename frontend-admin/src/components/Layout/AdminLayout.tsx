@@ -9,6 +9,7 @@ import {
   SmileOutlined,
   SettingOutlined,
   LogoutOutlined,
+  TeamOutlined,
 } from "@ant-design/icons";
 
 const { Header, Sider, Content } = Layout;
@@ -20,6 +21,7 @@ const menuItems = [
   { key: "/avatar", icon: <UserOutlined />, label: "数字人配置" },
   { key: "/feedback", icon: <SmileOutlined />, label: "游客反馈" },
   { key: "/settings", icon: <SettingOutlined />, label: "景区设置" },
+  { key: "/users", icon: <TeamOutlined />, label: "账号管理" },
 ];
 
 export default function AdminLayout() {

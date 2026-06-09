@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.services.llm_service import llm_service
 from app.services.embedding_service import embedding_service
-from app.services.recommendation_service import build_interest_context
+from app.services.recommendation_service import build_interest_context, get_recommended_routes
 from app.core.vector_store import get_or_create_collection
 from app.models.knowledge import KnowledgeChunk, QAPair
 from app.models.avatar import AvatarConfig
@@ -77,6 +77,7 @@ def _build_system_prompt(
     matched_qa: list[str],
     scenic_data: str,
     interest_context: str,
+    route_recommendations: str = "",
 ) -> str:
     parts = [persona_prompt]
 
@@ -91,6 +92,9 @@ def _build_system_prompt(
 
     if interest_context:
         parts.append("## 游客偏好\n" + interest_context)
+
+    if route_recommendations:
+        parts.append("## 推荐游览路线\n" + route_recommendations)
 
     parts.append(
         "【重要指示】请严格遵循以下要求回答用户问题：\n"
@@ -327,8 +331,31 @@ async def generate_rag_response(
     for qa in qa_matches[:5]:
         qa_texts.append(f"问: {qa['question']}\n答: {qa['answer']}")
 
-    # 5. Build interest context
+    # 5. Build interest context and get route recommendations
     interest_context = build_interest_context(user_interests) if user_interests else ""
+
+    route_recommendations = ""
+    if user_interests:
+        try:
+            routes = await get_recommended_routes(user_interests, db)
+            if routes:
+                route_lines = []
+                for r in routes:
+                    route_parts = []
+                    if r.get("route_type"):
+                        route_parts.append(f"路线类型: {r['route_type']}")
+                    if r.get("duration"):
+                        route_parts.append(f"时长: {r['duration']}")
+                    if r.get("path"):
+                        route_parts.append(f"路径: {r['path']}")
+                    if r.get("key_points"):
+                        route_parts.append(f"要点: {r['key_points']}")
+                    if r.get("experiences"):
+                        route_parts.append(f"体验: {r['experiences']}")
+                    route_lines.append(" | ".join(route_parts))
+                route_recommendations = "\n".join(route_lines)
+        except Exception:
+            pass
 
     # 6. Build system prompt
     system_prompt = _build_system_prompt(
@@ -337,6 +364,7 @@ async def generate_rag_response(
         matched_qa=qa_texts,
         scenic_data=scenic_data,
         interest_context=interest_context,
+        route_recommendations=route_recommendations,
     )
 
     # 7. Build messages

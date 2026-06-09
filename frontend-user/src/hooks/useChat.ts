@@ -5,7 +5,7 @@ export function useChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isThinking, setIsThinking] = useState(false);
 
-  const sendMessage = useCallback(async (text: string, conversationId: string | null): Promise<{ content: string; sources?: any[]; conversationId: string } | null> => {
+  const sendMessage = useCallback(async (text: string, conversationId: string | null, interests: string[] = []): Promise<{ content: string; sources?: any[]; conversationId: string } | null> => {
     const userMsg: Message = {
       id: crypto.randomUUID(),
       role: "user",
@@ -20,6 +20,7 @@ export function useChat() {
       const res = await apiClient.post("/chat/send", {
         text,
         conversation_id: conversationId,
+        interests,
       });
       const data = res.data;
 

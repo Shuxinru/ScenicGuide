@@ -109,7 +109,7 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 12px 8px;
+  padding: 10px 12px;
   background: #0d1f3c;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   flex-shrink: 0;
@@ -215,6 +215,12 @@ html, body, #root {
   min-height: 0;
 }
 
+.messages-empty {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 .chat-bubble {
   margin-bottom: 12px;
   display: flex;
@@ -314,6 +320,26 @@ html, body, #root {
 @keyframes dot-bounce {
   0%, 80%, 100% { transform: translateY(0); }
   40% { transform: translateY(-6px); }
+}
+
+/* Interest Bar (compact, above input) */
+.interest-bar {
+  padding: 6px 12px 2px;
+  flex-shrink: 0;
+}
+
+.interest-bar .interest-selector {
+  margin-bottom: 0;
+}
+
+.interest-bar .interest-hint {
+  display: none;
+}
+
+.interest-bar .interest-tag {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 12px;
 }
 
 /* Input Bar */

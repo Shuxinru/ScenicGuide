@@ -35,7 +35,7 @@ export default function UserLayout() {
       clearTranscript();
       const convId = chatStore.getState().conversationId;
 
-      const result = await sendMessage(text, convId);
+      const result = await sendMessage(text, convId, interests);
       if (!result) return;
 
       if (!convId) {
@@ -49,7 +49,7 @@ export default function UserLayout() {
         setEmotion("sorry");
       }
     },
-    [sendMessage, stopSpeak, clearTranscript, setEmotion]
+    [sendMessage, stopSpeak, clearTranscript, setEmotion, interests]
   );
 
   // New conversation

@@ -89,29 +89,29 @@ export default function ChatPanel({
         </div>
       </div>
 
-      {messages.length === 0 && (
-        <div className="welcome-section">
-          <h2>您好！</h2>
-          <p>我是景区AI导览助手，有什么可以帮您的？</p>
-          <InterestSelector selected={interests} onChange={onInterestsChange} />
-          <QuickQuestions onSelect={onSend} />
-        </div>
-      )}
-
-      <div className="messages-list">
-        {messages.map((msg) => (
-          <ChatBubble
-            key={msg.id}
-            message={msg}
-            isSpeaking={playback.isSpeaking}
-            playState={playback.playState}
-            isActive={playback.activeMessageId === msg.id}
-            onPlay={playback.onPlay}
-            onPause={playback.onPause}
-            onResume={playback.onResume}
-            onStop={playback.onStop}
-          />
-        ))}
+      <div className={`messages-list ${messages.length === 0 ? "messages-empty" : ""}`}>
+        {messages.length === 0 ? (
+          <div className="welcome-section">
+            <h2>您好！</h2>
+            <p>我是景区AI导览助手，有什么可以帮您的？</p>
+            <InterestSelector selected={interests} onChange={onInterestsChange} />
+            <QuickQuestions onSelect={onSend} />
+          </div>
+        ) : (
+          messages.map((msg) => (
+            <ChatBubble
+              key={msg.id}
+              message={msg}
+              isSpeaking={playback.isSpeaking}
+              playState={playback.playState}
+              isActive={playback.activeMessageId === msg.id}
+              onPlay={playback.onPlay}
+              onPause={playback.onPause}
+              onResume={playback.onResume}
+              onStop={playback.onStop}
+            />
+          ))
+        )}
         {isThinking && (
           <div className="thinking-bubble">
             <span className="dot" />
@@ -120,6 +120,11 @@ export default function ChatPanel({
           </div>
         )}
         <div ref={bottomRef} />
+      </div>
+
+      {/* Interest bar — always visible for personalized recommendations */}
+      <div className="interest-bar">
+        <InterestSelector selected={interests} onChange={onInterestsChange} />
       </div>
 
       <ChatInput
