@@ -35,12 +35,13 @@ export default function AdminLayout() {
   };
 
   return (
-    <Layout style={{ minHeight: "100vh" }}>
+    <Layout style={{ height: "100vh", overflow: "hidden" }}>
       <Sider
         collapsible
         collapsed={collapsed}
         onCollapse={setCollapsed}
         theme="dark"
+        style={{ overflow: "auto" }}
       >
         <div className="logo">
           {collapsed ? "AI" : "AI数字人平台"}
@@ -62,13 +63,14 @@ export default function AdminLayout() {
             justifyContent: "flex-end",
             alignItems: "center",
             borderBottom: "1px solid #f0f0f0",
+            flexShrink: 0,
           }}
         >
           <Button icon={<LogoutOutlined />} onClick={handleLogout} type="text">
             退出登录
           </Button>
         </Header>
-        <Content style={{ margin: 24 }}>
+        <Content style={{ margin: 24, overflow: "auto" }}>
           <Outlet />
         </Content>
       </Layout>

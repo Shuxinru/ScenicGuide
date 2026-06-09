@@ -46,13 +46,13 @@ export default function Live2DCanvas({
     const w = canvas.width;
     const h = canvas.height;
     const now = Date.now();
-    const unit = h / 600; // scale unit
+    const unit = h / 720; // scale unit
 
     ctx.clearRect(0, 0, w, h);
 
     // ── Background glow ──────────────────────────────────────
     const cx = w / 2;
-    const headCy = h * 0.22;
+    const headCy = h * 0.30;
 
     const glowGrad = ctx.createRadialGradient(cx, headCy, 40 * unit, cx, headCy, 280 * unit);
     glowGrad.addColorStop(0, "rgba(180, 210, 255, 0.35)");
