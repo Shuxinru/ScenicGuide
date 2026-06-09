@@ -27,7 +27,7 @@ import {
   PictureOutlined,
 } from "@ant-design/icons";
 import type { UploadProps } from "antd";
-import { getAvatarConfig, updateAvatarConfig, uploadClothingImage, AvatarConfig } from "../api/avatar";
+import { getAvatarConfig, updateAvatarConfig, uploadClothingImage, clearClothingImage, AvatarConfig } from "../api/avatar";
 
 const { TextArea } = Input;
 const { Title, Text } = Typography;
@@ -92,6 +92,19 @@ export default function AvatarConfigPage() {
       setUploadingClothing(false);
     }
     return false; // Prevent default upload behavior
+  };
+
+  const handleClearClothing = async () => {
+    setUploadingClothing(true);
+    try {
+      const updated = await clearClothingImage();
+      setConfig(updated);
+      message.success("服饰已清除，恢复默认外观");
+    } catch {
+      message.error("清除服饰失败");
+    } finally {
+      setUploadingClothing(false);
+    }
   };
 
   const uploadProps: UploadProps = {
@@ -284,6 +297,15 @@ export default function AvatarConfigPage() {
                   {config?.clothing_url ? "更换服装图片" : "上传服装图片"}
                 </Button>
               </Upload>
+              {config?.clothing_url && (
+                <Button
+                  danger
+                  onClick={handleClearClothing}
+                  loading={uploadingClothing}
+                >
+                  一键清除服饰
+                </Button>
+              )}
               {config?.clothing_url && (
                 <div
                   style={{

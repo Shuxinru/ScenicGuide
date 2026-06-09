@@ -90,24 +90,73 @@ export default function Live2DCanvas({
     const speakBob = isSpeaking ? Math.sin(now / 120) * 2 * unit : 0;
 
     // ── Head ─────────────────────────────────────────────────
-    const headR = 110 * unit;
+    const headR = 102 * unit;
     const headX = cx + idleSway;
     const headY = headCy + breath + speakBob;
 
-    // Neck shadow
-    ctx.fillStyle = "#f5c5a3";
+    // ── Body measurements ────────────────────────────────────
+    const shoulderY = headY + headR + 5 * unit + breath + speakBob;
+    const torsoH = 108 * unit;
+    const hipY = shoulderY + torsoH;
+    const shoulderHW = 55 * unit;
+    const waistHW = 38 * unit;
+    const hipHW = 52 * unit;
+    // Neck measurements
+    const neckTopY = headY + headR * 0.78;
+    const neckTopHW = 17 * unit;
+    const neckBotHW = 22 * unit;
+
+    // ── Neck + Torso (unified skin shape, drawn before face) ──
+    const bodyGrad = ctx.createLinearGradient(headX, neckTopY, headX, hipY);
+    bodyGrad.addColorStop(0, "#fff5ee");
+    bodyGrad.addColorStop(0.15, "#ffe8d6");
+    bodyGrad.addColorStop(0.5, "#fadcc8");
+    bodyGrad.addColorStop(1, "#f0c8a8");
+    ctx.fillStyle = bodyGrad;
     ctx.beginPath();
-    ctx.roundRect(headX - 22 * unit, headY + headR - 8 * unit, 44 * unit, 18 * unit, 6 * unit);
+    // Neck left top
+    ctx.moveTo(headX - neckTopHW, neckTopY);
+    // Neck left side down
+    ctx.quadraticCurveTo(headX - neckTopHW - 2 * unit, neckTopY + (shoulderY - neckTopY) * 0.5, headX - neckBotHW, shoulderY);
+    // Rounded shoulder slope out to shoulder point
+    ctx.quadraticCurveTo(headX - shoulderHW * 0.65, shoulderY + 5 * unit, headX - shoulderHW, shoulderY + 10 * unit);
+    // Side: shoulder → bust → waist → hip
+    ctx.quadraticCurveTo(headX - shoulderHW - 3 * unit, shoulderY + torsoH * 0.18, headX - shoulderHW + 5 * unit, shoulderY + torsoH * 0.26);
+    ctx.quadraticCurveTo(headX - waistHW, shoulderY + torsoH * 0.4, headX - waistHW, shoulderY + torsoH * 0.5);
+    ctx.quadraticCurveTo(headX - hipHW, shoulderY + torsoH * 0.7, headX - hipHW, hipY);
+    // Bottom
+    ctx.lineTo(headX + hipHW, hipY);
+    // Mirror right side up
+    ctx.quadraticCurveTo(headX + hipHW, shoulderY + torsoH * 0.7, headX + waistHW, shoulderY + torsoH * 0.5);
+    ctx.quadraticCurveTo(headX + waistHW, shoulderY + torsoH * 0.4, headX + shoulderHW - 5 * unit, shoulderY + torsoH * 0.26);
+    ctx.quadraticCurveTo(headX + shoulderHW + 3 * unit, shoulderY + torsoH * 0.18, headX + shoulderHW, shoulderY + 10 * unit);
+    // Rounded shoulder slope in to neck
+    ctx.quadraticCurveTo(headX + shoulderHW * 0.65, shoulderY + 5 * unit, headX + neckBotHW, shoulderY);
+    // Neck right side up
+    ctx.quadraticCurveTo(headX + neckTopHW + 2 * unit, neckTopY + (shoulderY - neckTopY) * 0.5, headX + neckTopHW, neckTopY);
+    ctx.closePath();
     ctx.fill();
 
-    // Face (round, slightly oval for cute look)
-    const skinGrad = ctx.createRadialGradient(headX - 10 * unit, headY - 15 * unit, headR * 0.3, headX, headY, headR);
+    // Subtle collarbone lines
+    ctx.strokeStyle = "rgba(210,160,130,0.25)";
+    ctx.lineWidth = 1.5 * unit;
+    ctx.beginPath();
+    ctx.moveTo(headX - neckBotHW, shoulderY + 2 * unit);
+    ctx.quadraticCurveTo(headX - neckBotHW * 0.6, shoulderY + 8 * unit, headX, shoulderY + 4 * unit);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(headX + neckBotHW, shoulderY + 2 * unit);
+    ctx.quadraticCurveTo(headX + neckBotHW * 0.6, shoulderY + 8 * unit, headX, shoulderY + 4 * unit);
+    ctx.stroke();
+
+    // Face (narrower with slightly pointed chin)
+    const skinGrad = ctx.createRadialGradient(headX - 8 * unit, headY - 15 * unit, headR * 0.25, headX, headY, headR);
     skinGrad.addColorStop(0, "#fff5ee");
     skinGrad.addColorStop(0.6, "#ffe8d6");
     skinGrad.addColorStop(1, "#f0c8a8");
     ctx.fillStyle = skinGrad;
     ctx.beginPath();
-    ctx.ellipse(headX, headY, headR, headR * 1.02, 0, 0, Math.PI * 2);
+    ctx.ellipse(headX, headY, headR * 0.92, headR * 0.96, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // ── Hair ─────────────────────────────────────────────────
@@ -118,27 +167,27 @@ export default function Live2DCanvas({
     ctx.fill();
     // Hair sides
     ctx.beginPath();
-    ctx.ellipse(headX - headR + 15 * unit, headY + 20 * unit, 30 * unit, 70 * unit, 0.1, 0, Math.PI * 2);
+    ctx.ellipse(headX - headR + 13 * unit, headY + 18 * unit, 26 * unit, 64 * unit, 0.1, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.ellipse(headX + headR - 15 * unit, headY + 20 * unit, 30 * unit, 70 * unit, -0.1, 0, Math.PI * 2);
+    ctx.ellipse(headX + headR - 13 * unit, headY + 18 * unit, 26 * unit, 64 * unit, -0.1, 0, Math.PI * 2);
     ctx.fill();
-    // Bangs
+    // Bangs (raised slightly above eyes)
     ctx.beginPath();
-    ctx.arc(headX, headY - headR + 10 * unit, headR + 4 * unit, Math.PI * 0.85, Math.PI * 0.15, true);
+    ctx.arc(headX, headY - headR + 5 * unit, headR + 4 * unit, Math.PI * 0.85, Math.PI * 0.15, true);
     ctx.fill();
     // Hair highlight
     ctx.fillStyle = "#4a3f38";
     ctx.beginPath();
-    ctx.arc(headX, headY - 50 * unit, 50 * unit, Math.PI * 1.1, Math.PI * 1.9);
+    ctx.arc(headX, headY - 46 * unit, 46 * unit, Math.PI * 1.1, Math.PI * 1.9);
     ctx.fill();
     // Side hair strands (front)
     ctx.fillStyle = "#3a2f28";
     ctx.beginPath();
-    ctx.ellipse(headX - headR - 5 * unit, headY + 8 * unit, 12 * unit, 55 * unit, 0.2, 0, Math.PI * 2);
+    ctx.ellipse(headX - headR - 4 * unit, headY + 8 * unit, 10 * unit, 50 * unit, 0.2, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.ellipse(headX + headR + 5 * unit, headY + 8 * unit, 12 * unit, 55 * unit, -0.2, 0, Math.PI * 2);
+    ctx.ellipse(headX + headR + 4 * unit, headY + 8 * unit, 10 * unit, 50 * unit, -0.2, 0, Math.PI * 2);
     ctx.fill();
 
     // ── Hair accessory (small flower clip) ───────────────────
@@ -157,10 +206,10 @@ export default function Live2DCanvas({
     ctx.fill();
 
     // ── Eyes ─────────────────────────────────────────────────
-    const eyeY = headY + 10 * unit;
-    const eyeSpacing = 32 * unit;
-    const eyeW = 24 * unit;
-    const eyeH = 28 * unit;
+    const eyeY = headY + 36 * unit;
+    const eyeSpacing = 28 * unit;
+    const eyeW = 22 * unit;
+    const eyeH = 26 * unit;
 
     // Blink scale
     const eyeScaleY = 1 - blinkAmount * 0.95;
@@ -335,141 +384,240 @@ export default function Live2DCanvas({
       }
     }
 
-    // ── Body ──────────────────────────────────────────────────
-    const bodyTop = headY + headR + 5 * unit + breath + speakBob;
-    const bodyH = 90 * unit;
-    const bodyW = 70 * unit;
+    // ── 1. Legs (skin — attached at hips) ────────────────────
+    const legLen = 40 * unit;
+    const legW = 24 * unit;
+    const legGap = 6 * unit;
 
-    // Body gradient
-    const bodyGrad = ctx.createLinearGradient(headX, bodyTop, headX, bodyTop + bodyH);
-    bodyGrad.addColorStop(0, "#e8d5f5");
-    bodyGrad.addColorStop(0.5, "#dcc8ee");
-    bodyGrad.addColorStop(1, "#cfb5e6");
-    ctx.fillStyle = bodyGrad;
-
-    // Body shape (rounded trapezoid for cute dress silhouette)
+    // Left leg
+    ctx.fillStyle = "#ffe8d6";
     ctx.beginPath();
-    ctx.moveTo(headX - bodyW * 0.55, bodyTop);
-    ctx.quadraticCurveTo(headX - bodyW * 0.6, bodyTop + bodyH * 0.5, headX - bodyW * 0.75, bodyTop + bodyH);
-    ctx.lineTo(headX + bodyW * 0.75, bodyTop + bodyH);
-    ctx.quadraticCurveTo(headX + bodyW * 0.6, bodyTop + bodyH * 0.5, headX + bodyW * 0.55, bodyTop);
-    ctx.closePath();
+    ctx.roundRect(headX - legGap / 2 - legW, hipY - 3 * unit, legW, legLen + 3 * unit, 10 * unit);
+    ctx.fill();
+    // Right leg
+    ctx.fillStyle = "#ffe8d6";
+    ctx.beginPath();
+    ctx.roundRect(headX + legGap / 2, hipY - 3 * unit, legW, legLen + 3 * unit, 10 * unit);
     ctx.fill();
 
-    // ── Clothing image overlay ─────────────────────────────────
-    const clothingImg = clothingImgRef.current;
-    if (clothingImg && clothingImg.complete && clothingImg.naturalWidth > 0) {
-      ctx.save();
-      // Clip to body shape
-      ctx.beginPath();
-      ctx.moveTo(headX - bodyW * 0.55, bodyTop);
-      ctx.quadraticCurveTo(headX - bodyW * 0.6, bodyTop + bodyH * 0.5, headX - bodyW * 0.75, bodyTop + bodyH);
-      ctx.lineTo(headX + bodyW * 0.75, bodyTop + bodyH);
-      ctx.quadraticCurveTo(headX + bodyW * 0.6, bodyTop + bodyH * 0.5, headX + bodyW * 0.55, bodyTop);
-      ctx.closePath();
-      ctx.clip();
+    // ── 2. Arms (animated — gesture during speech) ───────────
+    const armLen = 55 * unit;
+    const armW = 22 * unit;
+    const armTop = shoulderY + 6 * unit;
+    const armLX = headX - shoulderHW;
+    const armRX = headX + shoulderHW;
 
-      // Draw clothing image fitted to body bounds
-      const clothW = bodyW * 1.6;
-      const clothH = bodyH * 1.15;
-      const clothX = headX - clothW / 2;
-      const clothY = bodyTop - 5 * unit;
-      ctx.drawImage(clothingImg, clothX, clothY, clothW, clothH);
-      ctx.restore();
+    // Calculate arm angles based on state
+    let leftArmAngle = 0;
+    let rightArmAngle = 0;
+
+    if (isSpeaking) {
+      // Right arm raised for explanation, gentle wave
+      rightArmAngle = -0.38 + Math.sin(now / 320) * 0.12;
+      leftArmAngle = Math.sin(now / 650) * 0.07;
+    } else if (isThinking) {
+      rightArmAngle = Math.sin(now / 2000) * 0.04;
+      leftArmAngle = Math.sin(now / 2200) * 0.04;
+    } else {
+      // Idle gentle sway
+      rightArmAngle = Math.sin(now / 2400) * 0.05;
+      leftArmAngle = Math.sin(now / 2200 + 0.5) * 0.05;
     }
 
-    // Dress collar (V-neck with ruffle)
-    ctx.fillStyle = "#f0e8f8";
+    // Left arm
+    ctx.save();
+    ctx.translate(armLX, armTop);
+    ctx.rotate(leftArmAngle);
+    ctx.fillStyle = "#ffe8d6";
     ctx.beginPath();
-    ctx.moveTo(headX - 25 * unit, bodyTop);
-    ctx.quadraticCurveTo(headX - 10 * unit, bodyTop + 18 * unit, headX, bodyTop + 12 * unit);
-    ctx.quadraticCurveTo(headX + 10 * unit, bodyTop + 18 * unit, headX + 25 * unit, bodyTop);
-    ctx.quadraticCurveTo(headX, bodyTop + 5 * unit, headX - 25 * unit, bodyTop);
+    ctx.roundRect(-armW * 0.4, 0, armW, armLen, 11 * unit);
+    ctx.fill();
+    // Left hand
+    ctx.beginPath();
+    ctx.arc(0, armLen, 13 * unit, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Right arm
+    ctx.save();
+    ctx.translate(armRX, armTop);
+    ctx.rotate(rightArmAngle);
+    ctx.fillStyle = "#ffe8d6";
+    ctx.beginPath();
+    ctx.roundRect(-armW * 0.6, 0, armW, armLen, 11 * unit);
+    ctx.fill();
+    // Right hand
+    ctx.beginPath();
+    ctx.arc(0, armLen, 13 * unit, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // ── 3. Clothing / Dress (follows body silhouette) ──────
+    const dressTop = shoulderY + 2 * unit;
+    const dressBottom = hipY + 28 * unit;
+    const dressH = dressBottom - dressTop;
+    const dressWaistY = dressTop + dressH * 0.38;
+    const dWaistHW = waistHW + 4 * unit;
+    const clothingImg = clothingImgRef.current;
+    const hasClothing = clothingImg && clothingImg.complete && clothingImg.naturalWidth > 0;
+
+    // Body outline path (matches torso exactly, rounded shoulders, +2*unit margin)
+    const bodyClipPath = () => {
+      ctx.beginPath();
+      // Start at rounded shoulder point (left)
+      ctx.moveTo(headX - shoulderHW + 2 * unit, shoulderY + 10 * unit);
+      // Down left side following body contour
+      ctx.quadraticCurveTo(headX - shoulderHW - 4 * unit, shoulderY + torsoH * 0.18, headX - shoulderHW + 2 * unit, shoulderY + torsoH * 0.26);
+      ctx.quadraticCurveTo(headX - waistHW - 2 * unit, shoulderY + torsoH * 0.4, headX - waistHW - 2 * unit, shoulderY + torsoH * 0.5);
+      ctx.quadraticCurveTo(headX - hipHW - 3 * unit, shoulderY + torsoH * 0.7, headX - hipHW - 3 * unit, hipY + 2 * unit);
+      // Bottom across
+      ctx.lineTo(headX + hipHW + 3 * unit, hipY + 2 * unit);
+      // Up right side
+      ctx.quadraticCurveTo(headX + hipHW + 3 * unit, shoulderY + torsoH * 0.7, headX + waistHW + 2 * unit, shoulderY + torsoH * 0.5);
+      ctx.quadraticCurveTo(headX + waistHW + 2 * unit, shoulderY + torsoH * 0.4, headX + shoulderHW - 2 * unit, shoulderY + torsoH * 0.26);
+      ctx.quadraticCurveTo(headX + shoulderHW + 4 * unit, shoulderY + torsoH * 0.18, headX + shoulderHW - 2 * unit, shoulderY + 10 * unit);
+      ctx.closePath();
+    };
+
+    if (hasClothing) {
+      // ── Clothing: torso only (short-sleeve style, arms & legs exposed) ──
+      ctx.save();
+      bodyClipPath();
+      ctx.clip();
+
+      const imgW = clothingImg.naturalWidth;
+      const imgH = clothingImg.naturalHeight;
+      const imgRatio = imgW / imgH;
+      const torsoBoxW = (hipHW + 3) * 2;
+      const torsoBoxH = hipY - shoulderY + 20 * unit;
+      const torsoBoxY = shoulderY - 6 * unit;
+      const boxRatio = torsoBoxW / torsoBoxH;
+
+      let dw: number, dh: number, dx: number, dy: number;
+      if (imgRatio > boxRatio) {
+        dh = torsoBoxH; dw = torsoBoxH * imgRatio;
+        dx = headX - dw / 2; dy = torsoBoxY;
+      } else {
+        dw = torsoBoxW; dh = torsoBoxW / imgRatio;
+        dx = headX - dw / 2; dy = torsoBoxY + (torsoBoxH - dh) / 2;
+      }
+
+      ctx.drawImage(clothingImg, dx, dy, dw, dh);
+
+      // Body contour shading
+      const shadeGrad = ctx.createLinearGradient(headX, shoulderY, headX, hipY);
+      shadeGrad.addColorStop(0, "rgba(0,0,0,0.12)");
+      shadeGrad.addColorStop(0.2, "rgba(0,0,0,0.03)");
+      shadeGrad.addColorStop(0.38, "rgba(255,255,255,0.04)");
+      shadeGrad.addColorStop(0.55, "rgba(0,0,0,0.02)");
+      shadeGrad.addColorStop(0.75, "rgba(255,255,255,0.05)");
+      shadeGrad.addColorStop(1, "rgba(0,0,0,0.14)");
+      ctx.fillStyle = shadeGrad;
+      ctx.fillRect(headX - torsoBoxW, shoulderY - 6 * unit, torsoBoxW * 2, torsoBoxH + 8 * unit);
+      ctx.restore();
+    } else {
+      // Default dress gradient (no clothing uploaded)
+      const dHipHW_d = hipHW + 6 * unit;
+      const dHemHW = hipHW + 8 * unit;
+      const dShoulderHW = shoulderHW - 4 * unit;
+
+      const dressGrad = ctx.createLinearGradient(headX, dressTop, headX, dressBottom);
+      dressGrad.addColorStop(0, "#e8d5f5");
+      dressGrad.addColorStop(0.3, "#dcc8ee");
+      dressGrad.addColorStop(0.5, "#cfb5e6");
+      dressGrad.addColorStop(1, "#b8a0d0");
+      ctx.fillStyle = dressGrad;
+      ctx.beginPath();
+      ctx.moveTo(headX - dShoulderHW, dressTop);
+      ctx.quadraticCurveTo(headX - dShoulderHW - 3 * unit, dressTop + dressH * 0.18, headX - dWaistHW, dressWaistY);
+      ctx.quadraticCurveTo(headX - dWaistHW - 6 * unit, dressTop + dressH * 0.48, headX - dHipHW_d, dressTop + dressH * 0.58);
+      ctx.quadraticCurveTo(headX - dHipHW_d - 3 * unit, dressTop + dressH * 0.78, headX - dHemHW, dressBottom);
+      ctx.lineTo(headX + dHemHW, dressBottom);
+      ctx.quadraticCurveTo(headX + dHipHW_d + 3 * unit, dressTop + dressH * 0.78, headX + dHipHW_d, dressTop + dressH * 0.58);
+      ctx.quadraticCurveTo(headX + dWaistHW + 6 * unit, dressTop + dressH * 0.48, headX + dWaistHW, dressWaistY);
+      ctx.quadraticCurveTo(headX + dShoulderHW + 3 * unit, dressTop + dressH * 0.18, headX + dShoulderHW, dressTop);
+      ctx.closePath();
+      ctx.fill();
+
+      // Side contour shadows for 3D waist effect
+      ctx.fillStyle = "rgba(0,0,0,0.08)";
+      ctx.beginPath();
+      ctx.ellipse(headX - dWaistHW + 8 * unit, dressWaistY, 16 * unit, dressH * 0.12, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(headX + dWaistHW - 8 * unit, dressWaistY, 16 * unit, dressH * 0.12, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // ── Dress collar (V-neck ruffle) ────────────────────────
+    ctx.fillStyle = hasClothing ? "rgba(240,232,248,0.55)" : "#f0e8f8";
+    ctx.beginPath();
+    ctx.moveTo(headX - 28 * unit, dressTop);
+    ctx.quadraticCurveTo(headX - 12 * unit, dressTop + 18 * unit, headX, dressTop + 12 * unit);
+    ctx.quadraticCurveTo(headX + 12 * unit, dressTop + 18 * unit, headX + 28 * unit, dressTop);
+    ctx.quadraticCurveTo(headX, dressTop + 5 * unit, headX - 28 * unit, dressTop);
     ctx.fill();
 
-    // Dress detail line
+    // Dress center detail line
     ctx.strokeStyle = "#c0a8d8";
     ctx.lineWidth = 1.5 * unit;
     ctx.beginPath();
-    ctx.moveTo(headX, bodyTop + 12 * unit);
-    ctx.lineTo(headX, bodyTop + bodyH * 0.7);
+    ctx.moveTo(headX, dressTop + 12 * unit);
+    ctx.lineTo(headX, dressTop + dressH * 0.65);
     ctx.stroke();
 
-    // Waist sash/belt
+    // Waist sash/belt (at natural waist line)
     ctx.fillStyle = "#f5e6d0";
     ctx.beginPath();
-    ctx.roundRect(headX - 45 * unit, bodyTop + bodyH * 0.45, 90 * unit, 10 * unit, 3 * unit);
+    ctx.roundRect(headX - dWaistHW, dressWaistY - 2 * unit, dWaistHW * 2, 10 * unit, 3 * unit);
     ctx.fill();
 
     // Sash bow
     ctx.fillStyle = "#f5e6d0";
     ctx.beginPath();
-    ctx.ellipse(headX - 30 * unit, bodyTop + bodyH * 0.45 + 2 * unit, 16 * unit, 10 * unit, -0.3, 0, Math.PI * 2);
+    ctx.ellipse(headX - dWaistHW - 6 * unit, dressWaistY + 2 * unit, 16 * unit, 10 * unit, -0.3, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.ellipse(headX + 30 * unit, bodyTop + bodyH * 0.45 + 2 * unit, 16 * unit, 10 * unit, 0.3, 0, Math.PI * 2);
+    ctx.ellipse(headX + dWaistHW + 6 * unit, dressWaistY + 2 * unit, 16 * unit, 10 * unit, 0.3, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(headX, bodyTop + bodyH * 0.45 + 5 * unit, 7 * unit, 0, Math.PI * 2);
+    ctx.arc(headX, dressWaistY + 5 * unit, 7 * unit, 0, Math.PI * 2);
     ctx.fill();
 
-    // ── Arms ──────────────────────────────────────────────────
-    const armTop = bodyTop + 15 * unit;
-    const armLen = 55 * unit;
-
-    // Left arm
-    ctx.fillStyle = "#ffe8d6";
+    // ── Shoulder puff sleeves ────────────────────────────────
+    ctx.fillStyle = hasClothing ? "rgba(220,200,230,0.45)" : "#e0cee8";
+    // Left puff
     ctx.beginPath();
-    ctx.roundRect(headX - bodyW * 0.55 - 10 * unit, armTop, 22 * unit, armLen, 11 * unit);
+    ctx.ellipse(armLX, armTop + 4 * unit, armW * 0.75, armW * 0.6, 0, 0, Math.PI * 2);
     ctx.fill();
-    // Left hand
+    // Right puff
     ctx.beginPath();
-    ctx.arc(headX - bodyW * 0.55, armTop + armLen, 13 * unit, 0, Math.PI * 2);
+    ctx.ellipse(armRX, armTop + 4 * unit, armW * 0.75, armW * 0.6, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Right arm
-    ctx.beginPath();
-    ctx.roundRect(headX + bodyW * 0.55 - 12 * unit, armTop, 22 * unit, armLen, 11 * unit);
-    ctx.fill();
-    // Right hand
-    ctx.beginPath();
-    ctx.arc(headX + bodyW * 0.55, armTop + armLen, 13 * unit, 0, Math.PI * 2);
-    ctx.fill();
+    // ── Shoes ────────────────────────────────────────────────
+    const shoeY = hipY + legLen - 3 * unit;
 
-    // ── Legs ──────────────────────────────────────────────────
-    const legTop = bodyTop + bodyH;
-    const legLen = 35 * unit;
-
-    // Left leg
-    ctx.fillStyle = "#ffe8d6";
-    ctx.beginPath();
-    ctx.roundRect(headX - 25 * unit, legTop, 24 * unit, legLen, 10 * unit);
-    ctx.fill();
     // Left shoe
     ctx.fillStyle = "#e89090";
     ctx.beginPath();
-    ctx.roundRect(headX - 30 * unit, legTop + legLen - 3 * unit, 34 * unit, 16 * unit, 8 * unit);
+    ctx.roundRect(headX - legGap / 2 - legW - 5 * unit, shoeY, legW + 10 * unit, 16 * unit, 8 * unit);
     ctx.fill();
-    // Shoe bow
+    // Left shoe bow
     ctx.fillStyle = "#fff";
     ctx.beginPath();
-    ctx.ellipse(headX - 13 * unit, legTop + legLen + 2 * unit, 7 * unit, 5 * unit, 0, 0, Math.PI * 2);
+    ctx.ellipse(headX - legGap / 2 - legW / 2, shoeY + 8 * unit, 7 * unit, 5 * unit, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Right leg
-    ctx.fillStyle = "#ffe8d6";
-    ctx.beginPath();
-    ctx.roundRect(headX + 1 * unit, legTop, 24 * unit, legLen, 10 * unit);
-    ctx.fill();
     // Right shoe
     ctx.fillStyle = "#e89090";
     ctx.beginPath();
-    ctx.roundRect(headX - 4 * unit, legTop + legLen - 3 * unit, 34 * unit, 16 * unit, 8 * unit);
+    ctx.roundRect(headX + legGap / 2 - 5 * unit, shoeY, legW + 10 * unit, 16 * unit, 8 * unit);
     ctx.fill();
-    // Shoe bow
+    // Right shoe bow
     ctx.fillStyle = "#fff";
     ctx.beginPath();
-    ctx.ellipse(headX + 13 * unit, legTop + legLen + 2 * unit, 7 * unit, 5 * unit, 0, 0, Math.PI * 2);
+    ctx.ellipse(headX + legGap / 2 + legW / 2, shoeY + 8 * unit, 7 * unit, 5 * unit, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // ── Status indicators ─────────────────────────────────────

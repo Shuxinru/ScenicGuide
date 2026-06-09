@@ -34,3 +34,9 @@ export function uploadClothingImage(file: File): Promise<AvatarConfig> {
     })
     .then((res) => res.data);
 }
+
+export function clearClothingImage(): Promise<AvatarConfig> {
+  return apiClient
+    .post("/avatar/clear-clothing")
+    .then((res) => res.data);
+}

@@ -103,3 +103,19 @@ async def upload_clothing_image(
     await db.commit()
     await db.refresh(config)
     return config
+
+
+@router.post("/avatar/clear-clothing", response_model=AvatarConfigOut)
+async def clear_clothing_image(
+    db: AsyncSession = Depends(get_db),
+):
+    """Clear the clothing image, restoring default dress appearance."""
+    result = await db.execute(select(AvatarConfig).limit(1))
+    config = result.scalars().first()
+    if not config:
+        raise HTTPException(status_code=404, detail="Avatar config not found")
+
+    config.clothing_url = None
+    await db.commit()
+    await db.refresh(config)
+    return config
