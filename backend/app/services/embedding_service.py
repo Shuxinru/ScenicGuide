@@ -9,7 +9,7 @@ class EmbeddingService:
         os.environ.setdefault("HF_HUB_OFFLINE", "1")
         self.model = SentenceTransformer(
             "paraphrase-multilingual-MiniLM-L12-v2",
-            local_files_only=True,
+            local_files_only=False,
         )
 
     def embed_texts(self, texts: list[str]) -> list[list[float]]:
