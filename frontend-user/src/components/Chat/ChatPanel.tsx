@@ -74,7 +74,7 @@ export default function ChatPanel({
         <button className="header-btn" onClick={onNewChat} title="新建对话">
           ＋
         </button>
-        <span className="header-title">AI 导览助手</span>
+        <span className="header-title">景区导览AI数字人</span>
         <div className="header-actions">
           <button className="header-btn" onClick={() => setHistoryOpen(true)} title="历史对话">
             ☰
@@ -93,7 +93,7 @@ export default function ChatPanel({
         {messages.length === 0 ? (
           <div className="welcome-section">
             <h2>您好！</h2>
-            <p>我是景区AI导览助手，有什么可以帮您的？</p>
+            <p>我是景区导览AI数字人，有什么可以帮您的？</p>
             <InterestSelector selected={interests} onChange={onInterestsChange} />
             <QuickQuestions onSelect={onSend} />
           </div>

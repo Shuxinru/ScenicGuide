@@ -40,19 +40,56 @@ export default function AdminLayout() {
         collapsible
         collapsed={collapsed}
         onCollapse={setCollapsed}
+        trigger={collapsed ? ">" : "< 收起"}
         theme="dark"
-        style={{ overflow: "auto" }}
+        style={{
+          overflow: "auto",
+          background: "#0d1f3c",
+        }}
       >
-        <div className="logo">
-          {collapsed ? "AI" : "AI数字人平台"}
+        <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+          <div className="logo" style={{ background: "rgba(255,255,255,0.04)", flexShrink: 0 }}>
+            {collapsed ? "AI" : "AI数字人平台"}
+          </div>
+          <Menu
+            theme="dark"
+            mode="inline"
+            items={menuItems}
+            onClick={({ key }) => navigate(key)}
+            defaultSelectedKeys={["/"]}
+            style={{ background: "#0d1f3c", flexShrink: 0 }}
+          />
+          <div style={{ flex: 1 }} />
+          {!collapsed && (
+            <div style={{
+              textAlign: "center",
+              padding: "12px 20px 8px",
+              flexShrink: 0,
+            }}>
+              <img
+                src="/buddha.jpg"
+                alt="灵山大佛"
+                style={{
+                  width: "100%",
+                  maxWidth: 160,
+                  opacity: 0.5,
+                  borderRadius: 8,
+                  marginBottom: 10,
+                }}
+              />
+              <img
+                src="/lingshan.jpg"
+                alt="灵山胜境"
+                style={{
+                  width: "100%",
+                  maxWidth: 160,
+                  opacity: 0.5,
+                  borderRadius: 8,
+                }}
+              />
+            </div>
+          )}
         </div>
-        <Menu
-          theme="dark"
-          mode="inline"
-          items={menuItems}
-          onClick={({ key }) => navigate(key)}
-          defaultSelectedKeys={["/"]}
-        />
       </Sider>
       <Layout>
         <Header

@@ -13,8 +13,25 @@ body {
   font-size: 18px;
   font-weight: 700;
   letter-spacing: 2px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.04);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Sidebar light blue overrides */
+.ant-layout-sider-dark {
+  background: #0d1f3c !important;
+}
+
+.ant-menu-dark {
+  background: #0d1f3c !important;
+}
+
+.ant-menu-dark .ant-menu-item-selected {
+  background: rgba(74, 144, 217, 0.2) !important;
+}
+
+.ant-menu-dark .ant-menu-item:hover {
+  background: rgba(74, 144, 217, 0.1) !important;
 }
 
 .login-page {

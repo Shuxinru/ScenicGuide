@@ -7,9 +7,18 @@
 html, body, #root {
   height: 100%;
   font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
-  background: #0a1628;
   color: #fff;
   overflow: hidden;
+}
+
+body {
+  background:
+    linear-gradient(rgba(10, 22, 40, 0.65), rgba(10, 22, 40, 0.65)),
+    url("/bg-lingshan.jpg") center / cover no-repeat fixed;
+}
+
+#root {
+  background: transparent;
 }
 
 /* Layout */
@@ -87,9 +96,11 @@ html, body, #root {
   align-items: center;
   justify-content: center;
   background: linear-gradient(180deg, #0d1f3c 0%, #0a1628 100%);
+  border-radius: 20px;
   position: relative;
   min-width: 0;
   padding: 16px 40px;
+  overflow: hidden;
 }
 
 /* Chat Section */
@@ -239,8 +250,8 @@ html, body, #root {
 }
 
 .chat-bubble.user .bubble-content {
-  background: #1677ff;
-  color: #fff;
+  background: #89CFF0;
+  color: #1a3a4a;
   border-radius: 16px 16px 4px 16px;
   max-width: 75%;
   padding: 10px 14px;
@@ -460,6 +471,9 @@ html, body, #root {
   font-size: 15px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.85);
+  flex: 1;
+  text-align: center;
+  padding-left: 15px;
 }
 
 .header-actions {
