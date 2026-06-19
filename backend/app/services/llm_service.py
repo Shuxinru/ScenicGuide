@@ -25,6 +25,7 @@ class LLMService:
             messages=messages,
             temperature=temperature,
             max_tokens=max_tokens,
+            timeout=30.0,
         )
         return response.choices[0].message.content
 

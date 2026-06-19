@@ -1,3 +1,4 @@
+import asyncio
 import json
 import re
 from typing import Any
@@ -157,13 +158,15 @@ def _build_system_prompt(
         parts.append("## 推荐游览路线\n" + route_recommendations)
 
     parts.append(
-        "【重要指示】请严格遵循以下要求回答用户问题：\n"
-        "1. 使用自然、流畅的中文口语表达，如同一位亲切的导游在面对面讲解。\n"
-        "2. 绝对禁止使用任何 Markdown 格式标记！不要用 ** 加粗文字，不要用 - 或 * 开头做列表，不要用 # 做标题，不要用 ``` 做代码块。\n"
-        "3. 如需列举信息，请用中文序号（一、二、三）或阿拉伯数字（1. 2. 3.），每条信息用句号或分号结尾，自然融入段落中。\n"
-        "4. 必须优先基于景区数据库中提供的数据回答，引用真实的价格、时间、地点等信息。\n"
-        "5. 如果数据库中没有相关信息，请如实告知，并用自己的知识补充。\n"
-        "6. 回答应详细、准确，包含具体数字（如价格、时间、地点等）。"
+        "【数字人行为规范 — 最高优先级，必须严格遵守！】\n"
+        "1. 【诚实第一】你绝对不能编造、虚构或捏造任何信息。每一个事实陈述都必须有依据。\n"
+        "2. 【数据溯源】所有价格、时间、距离、历史年代等具体数字，只能从景区数据库或参考资料中引用，禁止凭空生成。\n"
+        "3. 【知之为知之】如果数据库和参考资料中没有相关信息，你必须诚实地说「抱歉，我目前没有掌握这方面的信息，建议您咨询景区工作人员」，不得用猜测、估计或编造来填补空白。\n"
+        "4. 【禁止幻觉】禁止编造不存在的景点名称、路线、票价、演出时间、历史事件。禁止将其他景区的信息套用到本景区。\n"
+        "5. 【不确定时明确说明】如果信息不够完整或你不够确定，必须在回答中明确标注「根据现有资料」或「建议您现场确认」。\n"
+        "6. 【精简回答】默认回答控制在 3-5 句话（约60-120字），言简意赅、直奔主题。只讲最核心的 1-2 个要点。仅在游客明确要求「详细说说」「再具体一点」「展开讲讲」或连续追问同一话题时，才提供完整详细的回答。\n"
+        "7. 【口语表达】使用自然、流畅的中文口语，如同一位导游在面对面简短交流。\n"
+        "8. 【格式要求】绝对禁止使用 Markdown 格式（**、#、-、``` 等），列举用中文序号或阿拉伯数字。"
     )
 
     return "\n\n".join(parts)
@@ -345,19 +348,17 @@ async def _query_scenic_data(db: AsyncSession, question: str) -> str:
 async def retrieve_context(
     question: str,
     db: AsyncSession,
-    top_k: int = 10,
+    top_k: int = 6,
 ) -> tuple[list[dict], list[dict], str]:
-    """Retrieve relevant context from all sources."""
+    """Retrieve relevant context from all sources in parallel."""
     query_embedding = embedding_service.embed_query(question)
 
-    # Search ChromaDB
-    chroma_chunks = await _search_chromadb(query_embedding, top_k=top_k)
-
-    # Search Q&A pairs
-    qa_matches = await _search_qa_keywords(question, db)
-
-    # Query scenic data from MySQL with keyword matching
-    scenic_data = await _query_scenic_data(db, question)
+    # Run ChromaDB, QA, and scenic queries in parallel
+    chroma_chunks, qa_matches, scenic_data = await asyncio.gather(
+        _search_chromadb(query_embedding, top_k=top_k),
+        _search_qa_keywords(question, db),
+        _query_scenic_data(db, question),
+    )
 
     return chroma_chunks, qa_matches, scenic_data
 
@@ -371,7 +372,7 @@ async def generate_rag_response(
     """Full RAG pipeline: retrieve context and generate response."""
 
     # 1. Retrieve context
-    chroma_chunks, qa_matches, scenic_data = await retrieve_context(question, db, top_k=10)
+    chroma_chunks, qa_matches, scenic_data = await retrieve_context(question, db, top_k=6)
 
     # 2. Get avatar config (persona, tone, style)
     result = await db.execute(select(AvatarConfig).limit(1))
@@ -443,7 +444,7 @@ async def generate_rag_response(
     raw_text = await llm_service.generate(
         messages=messages,
         temperature=0.7,
-        max_tokens=1024,
+        max_tokens=768,
     )
 
     # 9. Strip markdown from response
