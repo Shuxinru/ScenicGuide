@@ -13,8 +13,11 @@ import type { Message } from "../../types/chat";
 export default function UserLayout() {
   const [interests, setInterests] = useState<string[]>([]);
   const [clothingUrl, setClothingUrl] = useState<string | null>(null);
+  const [voiceName, setVoiceName] = useState<string>("zh-CN-XiaoxiaoNeural");
+  const [voiceSpeed, setVoiceSpeed] = useState<number>(1.0);
+  const [voicePitch, setVoicePitch] = useState<number>(1.0);
 
-  const { messages, isThinking, sendMessage, clearMessages, setMessages } = useChat();
+  const { messages, isThinking, sendMessage, stopGeneration, clearMessages, setMessages } = useChat();
   const { isListening, transcript, interimTranscript, error: voiceError, start: startListen, stop: stopListen, clearTranscript, supported: voiceSupported } = useSpeechRecognition();
   const { isSpeaking, playState, activeMessageId, speak, pause, resume, stop: stopSpeak, supported: ttsSupported } = useSpeechSynthesis();
   const { mouthOpen, expression, setMouthByChar, startSpeaking, stopSpeaking, setEmotion } = useLive2D();
@@ -45,10 +48,12 @@ export default function UserLayout() {
       }
 
       const content = result.content;
-      if (content.includes("欢迎") || content.includes("高兴")) {
-        setEmotion("happy");
-      } else if (content.includes("抱歉") || content.includes("对不起")) {
+      if (content.includes("欢迎") || content.includes("高兴") || content.includes("感谢") || content.includes("谢谢") || content.includes("很棒")) {
+        setEmotion("thankful");
+      } else if (content.includes("抱歉") || content.includes("对不起") || content.includes("遗憾")) {
         setEmotion("sorry");
+      } else if (content.includes("惊讶") || content.includes("不可思议") || content.includes("哇") || content.includes("太棒了") || content.includes("真的吗")) {
+        setEmotion("surprised");
       }
     },
     [sendMessage, stopSpeak, clearTranscript, setEmotion, interests]
@@ -93,7 +98,7 @@ export default function UserLayout() {
       setEmotion("happy");
       speak(content, messageId, (charIndex: number) => {
         setMouthByChar(charIndex, content);
-      });
+      }, voiceName, voiceSpeed, voicePitch);
     },
     [speak, startSpeaking, setMouthByChar, setEmotion]
   );
@@ -130,6 +135,9 @@ export default function UserLayout() {
   useEffect(() => {
     apiClient.get("/avatar/config").then((res) => {
       setClothingUrl(res.data.clothing_url || null);
+      setVoiceName(res.data.voice_name || "zh-CN-XiaoxiaoNeural");
+      setVoiceSpeed(res.data.voice_speed || 1.0);
+      setVoicePitch(res.data.voice_pitch || 1.0);
     }).catch(() => {});
   }, []);
 
@@ -161,6 +169,7 @@ export default function UserLayout() {
           isThinking={isThinking}
           conversationId={conversationId}
           onSend={handleSend}
+          onStopGeneration={stopGeneration}
           onNewChat={handleNewChat}
           onLoadConversation={handleLoadConversation}
           interests={interests}

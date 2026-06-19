@@ -343,7 +343,7 @@ body {
 
 /* Interest Bar (compact, above input) */
 .interest-bar {
-  padding: 6px 12px 2px;
+  padding: 4px 12px 0;
   flex-shrink: 0;
 }
 
@@ -361,9 +361,48 @@ body {
   border-radius: 12px;
 }
 
+/* Quick Actions */
+.quick-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  padding: 6px 12px 0;
+  flex-shrink: 0;
+}
+
+.quick-action-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 3px 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.quick-action-btn:hover {
+  background: rgba(74, 144, 217, 0.2);
+  border-color: rgba(74, 144, 217, 0.35);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.quick-action-btn:active {
+  transform: scale(0.95);
+}
+
+.quick-action-label {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
 /* Input Bar */
 .chat-input-bar {
-  padding: 8px 12px;
+  padding: 4px 12px 8px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   background: #0d1f3c;
   flex-shrink: 0;
@@ -444,6 +483,19 @@ body {
 
 .send-btn:hover:not(:disabled) {
   background: #4096ff;
+}
+
+.send-btn.stop-btn {
+  background: #ff4d4f;
+  border-radius: 20px;
+  padding: 10px 14px;
+  font-size: 13px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.send-btn.stop-btn:hover {
+  background: #ff7875;
 }
 
 .voice-error {

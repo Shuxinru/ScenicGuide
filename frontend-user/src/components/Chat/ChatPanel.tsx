@@ -22,6 +22,7 @@ interface Props {
   isThinking: boolean;
   conversationId: string | null;
   onSend: (text: string) => void;
+  onStopGeneration: () => void;
   onNewChat: () => void;
   onLoadConversation: (convId: string) => void;
   interests: string[];
@@ -40,6 +41,7 @@ export default function ChatPanel({
   isThinking,
   conversationId,
   onSend,
+  onStopGeneration,
   onNewChat,
   onLoadConversation,
   interests,
@@ -127,8 +129,29 @@ export default function ChatPanel({
         <InterestSelector selected={interests} onChange={onInterestsChange} />
       </div>
 
+      {/* Quick action buttons */}
+      <div className="quick-actions">
+        <button className="quick-action-btn" onClick={() => onSend("👍 太棒了！")} title="点赞">
+          👍 <span className="quick-action-label">赞</span>
+        </button>
+        <button className="quick-action-btn" onClick={() => onSend("😊")} title="开心">
+          😊 <span className="quick-action-label">开心</span>
+        </button>
+        <button className="quick-action-btn" onClick={() => onSend("🙏 谢谢！")} title="感谢">
+          🙏 <span className="quick-action-label">感谢</span>
+        </button>
+        <button className="quick-action-btn" onClick={() => onSend("👏👏👏")} title="鼓掌">
+          👏 <span className="quick-action-label">鼓掌</span>
+        </button>
+        <button className="quick-action-btn" onClick={() => onSend("😲 真的吗？")} title="惊讶">
+          😲 <span className="quick-action-label">惊讶</span>
+        </button>
+      </div>
+
       <ChatInput
         onSend={onSend}
+        onStopGeneration={onStopGeneration}
+        isThinking={isThinking}
         disabled={isThinking}
         isListening={isListening}
         transcript={transcript}

@@ -71,6 +71,54 @@ def _extract_keywords(question: str, min_len: int = 1) -> list[str]:
     return result[:15]
 
 
+TONE_INSTRUCTIONS: dict[str, str] = {
+    "friendly": (
+        "【语气要求：亲切友好】\n"
+        "- 像一位关心游客的朋友或家人，语气温暖、有亲和力\n"
+        "- 在回答中适当加入人文关怀，如提醒注意天气、休息、安全等\n"
+        "- 多使用「您」「请」「祝您」「欢迎」等礼貌热情的词语\n"
+        "- 回答结尾可以加上一句温馨祝福或贴心小提示\n"
+        "- 对游客的疑问给予充分的理解和耐心"
+    ),
+    "professional": (
+        "【语气要求：专业严谨】\n"
+        "- 语言简洁凝练，用词准确规范，如同一位专业导游\n"
+        "- 优先引用具体数据（时间、价格、距离、编号等），用事实说话\n"
+        "- 条理清晰：背景 → 要点 → 实用信息，层层递进\n"
+        "- 避免冗余表达，每句话都应有信息量\n"
+        "- 适当使用专业术语，但要确保游客能理解"
+    ),
+    "humorous": (
+        "【语气要求：幽默风趣】\n"
+        "- 语言生动活泼，偶尔加入俏皮话或幽默的比喻\n"
+        "- 在合适的时机（如介绍趣味景点时）加入轻松的调侃\n"
+        "- 可以用夸张、拟人等修辞手法让讲解更有趣\n"
+        "- 保持信息的准确性，幽默是点缀而非主体\n"
+        "- 注意分寸：不拿严肃的历史文化开玩笑，不冒犯游客"
+    ),
+}
+
+STYLE_INSTRUCTIONS: dict[str, str] = {
+    "古风": (
+        "【语言风格：古风】\n"
+        "- 适当融入古典诗词意象和文言表达，如「此处」、「诸位」、「可谓」等\n"
+        "- 描写景色时多用工笔手法，意境悠远\n"
+        "- 引经据典时自然融入白话文中，不显生硬"
+    ),
+    "现代": (
+        "【语言风格：现代】\n"
+        "- 采用自然流畅的现代中文口语，亲切随意\n"
+        "- 可用当下流行的表达方式，贴近年轻人的语言习惯"
+    ),
+    "卡通": (
+        "【语言风格：卡通】\n"
+        "- 语气萌趣可爱，偶尔使用拟声词（如「叮咚～」「哇塞～」）\n"
+        "- 用小朋友也能理解的方式讲解复杂知识\n"
+        "- 可以想象成可爱的卡通导游在带领游客游览"
+    ),
+}
+
+
 def _build_system_prompt(
     persona_prompt: str,
     context_chunks: list[str],
@@ -78,8 +126,20 @@ def _build_system_prompt(
     scenic_data: str,
     interest_context: str,
     route_recommendations: str = "",
+    tone: str = "friendly",
+    style: str = "现代",
 ) -> str:
     parts = [persona_prompt]
+
+    # Inject tone-specific instructions (if available)
+    tone_instr = TONE_INSTRUCTIONS.get(tone)
+    if tone_instr:
+        parts.append(tone_instr)
+
+    # Inject style-specific instructions (if available)
+    style_instr = STYLE_INSTRUCTIONS.get(style)
+    if style_instr:
+        parts.append(style_instr)
 
     if context_chunks:
         parts.append("## 参考资料\n" + "\n\n".join(context_chunks))
@@ -313,12 +373,14 @@ async def generate_rag_response(
     # 1. Retrieve context
     chroma_chunks, qa_matches, scenic_data = await retrieve_context(question, db, top_k=10)
 
-    # 2. Get avatar persona prompt
+    # 2. Get avatar config (persona, tone, style)
     result = await db.execute(select(AvatarConfig).limit(1))
     avatar_config = result.scalars().first()
     persona_prompt = avatar_config.persona_prompt if avatar_config else (
         "你是一个热情、知识渊博的景区导览助手。请用口语化的中文友好地回答游客的问题，如同一位亲切的导游在面对面讲解。"
     )
+    tone = avatar_config.tone if avatar_config else "friendly"
+    style = avatar_config.style if avatar_config else "现代"
 
     # 3. Build context chunks from ChromaDB results
     top_chunks = chroma_chunks[:5]
@@ -365,6 +427,8 @@ async def generate_rag_response(
         scenic_data=scenic_data,
         interest_context=interest_context,
         route_recommendations=route_recommendations,
+        tone=tone,
+        style=style,
     )
 
     # 7. Build messages

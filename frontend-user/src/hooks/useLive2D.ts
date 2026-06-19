@@ -23,9 +23,11 @@ function guessMouthFromChar(ch: string): number {
   return 0.4;
 }
 
+export type Emotion = "neutral" | "happy" | "sorry" | "serious" | "surprised" | "thankful";
+
 export function useLive2D() {
   const [mouthOpen, setMouthOpen] = useState(0);
-  const [expression, setExpression] = useState<"neutral" | "happy" | "sorry" | "serious">("neutral");
+  const [expression, setExpression] = useState<Emotion>("neutral");
   const targetRef = useRef(0);
   const animRef = useRef<number | null>(null);
   const activeRef = useRef(false);
@@ -89,7 +91,7 @@ export function useLive2D() {
   }, []);
 
   const setEmotion = useCallback(
-    (emotion: "neutral" | "happy" | "sorry" | "serious") => {
+    (emotion: Emotion) => {
       setExpression(emotion);
       if (emotionTimerRef.current) clearTimeout(emotionTimerRef.current);
       emotionTimerRef.current = window.setTimeout(() => setExpression("neutral"), 4000);

@@ -141,12 +141,15 @@ export default function AvatarConfigPage() {
   ];
 
   const voiceOptions = [
-    { value: "zh-CN-XiaoxiaoNeural", label: "晓晓 (女, 温柔)" },
-    { value: "zh-CN-YunxiNeural", label: "云希 (男, 清亮)" },
-    { value: "zh-CN-YunxiaNeural", label: "云夏 (男, 稳重)" },
-    { value: "zh-CN-XiaohanNeural", label: "晓涵 (女, 活泼)" },
+    { value: "zh-CN-XiaoxiaoNeural", label: "晓晓 (女, 稳重)" },
+    { value: "zh-CN-XiaochenNeural", label: "晓辰 (女, 活泼)" },
+    { value: "zh-CN-XiaohanNeural", label: "晓涵 (女, 灵动)" },
+    { value: "zh-CN-XiaoruiNeural", label: "晓睿 (女, 清亮)" },
     { value: "zh-CN-XiaomoNeural", label: "晓墨 (女, 知性)" },
     { value: "zh-CN-XiaoxuanNeural", label: "晓萱 (女, 亲切)" },
+    { value: "zh-CN-YunxiNeural", label: "云希 (男, 清亮)" },
+    { value: "zh-CN-YunyangNeural", label: "云扬 (男, 阳光)" },
+    { value: "zh-CN-YunxiaNeural", label: "云夏 (男, 稳重)" },
   ];
 
   const styleOptions = [

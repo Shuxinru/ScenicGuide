@@ -301,7 +301,7 @@ export default function Live2DCanvas({
     let browAngleR = 0.05;
     let browYOff = 0;
 
-    if (expression === "happy") {
+    if (expression === "happy" || expression === "thankful") {
       browAngleL = -0.25;
       browAngleR = 0.25;
       browYOff = -4 * unit;
@@ -313,6 +313,10 @@ export default function Live2DCanvas({
       browAngleL = 0.05;
       browAngleR = -0.05;
       browYOff = -6 * unit;
+    } else if (expression === "surprised") {
+      browAngleL = -0.35;
+      browAngleR = 0.35;
+      browYOff = -12 * unit;
     }
 
     // Left brow
@@ -355,11 +359,23 @@ export default function Live2DCanvas({
     ctx.lineWidth = 2.5 * unit;
     ctx.lineCap = "round";
 
-    if (expression === "happy" && openAmt < 2) {
-      // Smile
+    if (expression === "happy" || expression === "thankful") {
+      if (openAmt < 2) {
+        // Smile
+        ctx.beginPath();
+        ctx.arc(headX, mouthY - 2 * unit, 10 * unit, 0.2, Math.PI - 0.2);
+        ctx.stroke();
+      } else {
+        // Open smile
+        ctx.beginPath();
+        ctx.ellipse(headX, mouthY, 9 * unit, openAmt, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (expression === "surprised") {
+      // Round "O" mouth
       ctx.beginPath();
-      ctx.arc(headX, mouthY - 2 * unit, 10 * unit, 0.2, Math.PI - 0.2);
-      ctx.stroke();
+      ctx.ellipse(headX, mouthY + 2 * unit, 7 * unit, openAmt + 8 * unit, 0, 0, Math.PI * 2);
+      ctx.fill();
     } else if (expression === "sorry" && openAmt < 2) {
       // Wavy mouth
       ctx.beginPath();
