@@ -60,6 +60,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionReturn {
 
     recognition.onend = () => {
       setIsListening(false);
+      recognitionRef.current = null;
     };
 
     recognitionRef.current = recognition;
@@ -72,10 +73,10 @@ export function useSpeechRecognition(): UseSpeechRecognitionReturn {
 
   const stop = useCallback(() => {
     if (recognitionRef.current) {
-      recognitionRef.current.abort();
-      recognitionRef.current = null;
+      // Use stop() instead of abort() so the final transcript is preserved
+      recognitionRef.current.stop();
+      // onend handler will set isListening(false) and clear the ref
     }
-    setIsListening(false);
   }, []);
 
   useEffect(() => {

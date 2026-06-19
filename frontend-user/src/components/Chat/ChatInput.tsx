@@ -29,10 +29,10 @@ export default function ChatInput({
   const [mode, setMode] = useState<"text" | "voice">("text");
   const wasListeningRef = useRef(false);
 
-  // When voice stops naturally, capture transcript to text input
+  // When voice stops naturally, append transcript to existing text
   useEffect(() => {
     if (wasListeningRef.current && !isListening && transcript && mode === "voice") {
-      setText(transcript);
+      setText((prev) => (prev ? prev + " " + transcript : transcript));
       setMode("text");
     }
     wasListeningRef.current = isListening;
@@ -87,8 +87,8 @@ export default function ChatInput({
                     setMode("voice");
                     onMicToggle();
                   } else {
-                    // Pause: keep transcript in text
-                    if (transcript) setText(transcript);
+                    // Pause: append transcript to existing text
+                    if (transcript) setText((prev) => (prev ? prev + " " + transcript : transcript));
                     setMode("text");
                     if (isListening) onMicToggle();
                   }
