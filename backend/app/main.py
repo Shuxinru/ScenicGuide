@@ -1,4 +1,5 @@
 import os
+import uuid
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -28,16 +29,37 @@ async def lifespan(app: FastAPI):
     if db_ok:
         print(f"[OK] MySQL connected: {settings.db_host}:{settings.db_port}/{settings.db_name}")
         async with engine.begin() as conn:
+            from sqlalchemy import text as sa_text
+
             await conn.run_sync(Base.metadata.create_all)
+
             # Add clothing_url column if upgrading from older schema
             try:
                 await conn.execute(
-                    __import__("sqlalchemy").text(
-                        "ALTER TABLE avatar_configs ADD COLUMN clothing_url VARCHAR(500) NULL"
-                    )
+                    sa_text("ALTER TABLE avatar_configs ADD COLUMN clothing_url VARCHAR(500) NULL")
                 )
             except Exception:
-                pass  # Column already exists
+                pass
+
+            # Create default admin user if none exists
+            result = await conn.execute(sa_text("SELECT COUNT(*) FROM admin_users"))
+            count = result.scalar() or 0
+            if count == 0:
+                from passlib.context import CryptContext
+                pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+                admin_id = str(uuid.uuid4())
+                hashed = pwd_context.hash("admin123")
+                await conn.execute(
+                    sa_text(
+                        "INSERT INTO admin_users (id, username, password_hash, role, is_active, created_at) "
+                        "VALUES (:id, :username, :password_hash, :role, :is_active, NOW())"
+                    ),
+                    {"id": admin_id, "username": "admin", "password_hash": hashed, "role": "admin", "is_active": True},
+                )
+                print(f"[OK] Default admin created — username: admin  password: admin123")
+            else:
+                print(f"[OK] Admin users found: {count}")
+
         print(f"[OK] Database tables verified/created")
     else:
         print(f"[WARN] MySQL connection failed. Check .env config.")
