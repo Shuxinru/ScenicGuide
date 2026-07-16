@@ -17,12 +17,25 @@ export function useSpeechRecognition(): UseSpeechRecognitionReturn {
   const [interimTranscript, setInterimTranscript] = useState("");
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
-  const supported = typeof window !== "undefined" && ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
+  const supported =
+    typeof window !== "undefined" &&
+    ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
 
   const start = useCallback(() => {
+    if (typeof window !== "undefined" && !window.isSecureContext) {
+      setError("语音识别需要安全连接。请通过 localhost 或 HTTPS 访问页面。当前访问地址为非安全上下文。");
+      return;
+    }
+
     if (!supported) {
       setError("您的浏览器不支持语音识别，请使用 Chrome 或 Edge 浏览器。");
       return;
+    }
+
+    // Abort any existing recognition first
+    if (recognitionRef.current) {
+      try { recognitionRef.current.abort(); } catch {}
+      recognitionRef.current = null;
     }
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -48,10 +61,15 @@ export function useSpeechRecognition(): UseSpeechRecognitionReturn {
     };
 
     recognition.onerror = (event: any) => {
+      console.error("[SpeechRecognition] Error:", event.error, event.message || "");
       if (event.error === "no-speech") {
         setError("未检测到语音，请再试一次。");
       } else if (event.error === "not-allowed") {
         setError("请允许使用麦克风权限。");
+      } else if (event.error === "network") {
+        setError("语音识别网络不可达。请尝试：1) 使用 Edge 浏览器 2) 确认网络连接 3) 切换到 localhost 访问。");
+      } else if (event.error === "service-not-allowed") {
+        setError("语音识别服务未授权，请使用 HTTPS 或 localhost 访问。");
       } else if (event.error !== "aborted") {
         setError(`语音识别错误：${event.error}`);
       }
@@ -67,8 +85,16 @@ export function useSpeechRecognition(): UseSpeechRecognitionReturn {
     setError(null);
     setTranscript("");
     setInterimTranscript("");
-    recognition.start();
-    setIsListening(true);
+
+    try {
+      recognition.start();
+      setIsListening(true);
+    } catch (e: any) {
+      console.error("[SpeechRecognition] start() failed:", e.message);
+      setError(`无法启动语音识别：${e.message}`);
+      setIsListening(false);
+      recognitionRef.current = null;
+    }
   }, [supported]);
 
   const stop = useCallback(() => {

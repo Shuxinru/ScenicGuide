@@ -16,7 +16,7 @@ class AvatarConfig(Base):
     greeting_msg: Mapped[str] = mapped_column(Text, default="您好！我是景区AI导览助手，有什么可以帮您的？")
     persona_prompt: Mapped[str] = mapped_column(Text, default="你是一个热情、知识渊博的景区导览助手。请用简洁友好的中文回答游客的问题。")
     tone: Mapped[str] = mapped_column(String(20), default="friendly")
-    voice_name: Mapped[str] = mapped_column(String(50), default="zh-CN-XiaoxiaoNeural")
+    voice_name: Mapped[str] = mapped_column(String(50), default="voice-0")
     voice_speed: Mapped[float] = mapped_column(Float, default=1.0)
     voice_pitch: Mapped[float] = mapped_column(Float, default=1.0)
     clothing_url: Mapped[str] = mapped_column(String(500), nullable=True)

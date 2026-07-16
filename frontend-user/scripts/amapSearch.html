@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Amap POI Search</title>
+<style>body { font-family: monospace; padding: 20px; } .result { margin: 4px 0; }</style>
+</head>
+<body>
+<div id="status">Loading Amap JS API...</div>
+<div id="results"></div>
+<script>
+const KEY = "d1f15ad3fdf0c704434eaf23c7c18698";
+const spots = [
+  "灵山大照壁", "五明桥", "佛足坛", "五智门", "菩提大道",
+  "九龙灌浴", "降魔浮雕", "阿育王柱", "百子戏弥勒", "祥符禅寺",
+  "灵山大佛", "佛教文化博览馆", "灵山梵宫", "五印坛城", "曼飞龙塔", "无尽意斋",
+];
+
+window._AMapSecurityConfig = { serviceHost: "/_AMapService" };
+
+const script = document.createElement("script");
+script.src = `https://webapi.amap.com/maps?v=2.0&key=${KEY}&plugin=AMap.PlaceSearch`;
+script.onerror = () => {
+  document.getElementById("status").textContent = "FAILED to load Amap JS API";
+};
+document.head.appendChild(script);
+
+script.onload = function() {
+  document.getElementById("status").textContent = "Amap JS API loaded, searching...";
+
+  const results = [];
+  let done = 0;
+  const resultDiv = document.getElementById("results");
+
+  function searchNext(index) {
+    if (index >= spots.length) {
+      document.getElementById("status").textContent = "DONE!";
+      resultDiv.innerHTML += "<hr><b>COPY THIS:</b><br><pre>" + JSON.stringify(results, null, 2) + "</pre>";
+      return;
+    }
+
+    const name = spots[index];
+    const placeSearch = new AMap.PlaceSearch({
+      city: "无锡",
+      pageSize: 3,
+      extensions: "all",
+    });
+
+    placeSearch.search(name, function(status, res) {
+      done++;
+      if (status === "complete" && res.pois && res.pois.length > 0) {
+        const best = res.pois[0];
+        // Check if name matches well
+        for (const poi of res.pois) {
+          if (poi.name === name || poi.name.includes(name) || name.includes(poi.name)) {
+            results.push({
+              spot: name,
+              amap_name: poi.name,
+              lat: poi.location.lat,
+              lng: poi.location.lng,
+              address: poi.address || "",
+            });
+            resultDiv.innerHTML += `<div class="result">${name}: <b>${poi.location.lat}, ${poi.location.lng}</b> (${poi.name}) [${done}/${spots.length}]</div>`;
+            searchNext(index + 1);
+            return;
+          }
+        }
+        // Use first result anyway
+        results.push({
+          spot: name,
+          amap_name: best.name,
+          lat: best.location.lat,
+          lng: best.location.lng,
+          address: best.address || "",
+        });
+        resultDiv.innerHTML += `<div class="result">${name}: <b>${best.location.lat}, ${best.location.lng}</b> (${best.name}) [${done}/${spots.length}]</div>`;
+      } else {
+        results.push({ spot: name, amap_name: "NOT FOUND", lat: null, lng: null });
+        resultDiv.innerHTML += `<div class="result">${name}: NOT FOUND [${done}/${spots.length}]</div>`;
+      }
+      searchNext(index + 1);
+    });
+  }
+
+  searchNext(0);
+};
+</script>
+</body>
+</html>

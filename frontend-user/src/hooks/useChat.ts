@@ -6,7 +6,7 @@ export function useChat() {
   const [isThinking, setIsThinking] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  const sendMessage = useCallback(async (text: string, conversationId: string | null, interests: string[] = []): Promise<{ content: string; sources?: any[]; conversationId: string } | null> => {
+  const sendMessage = useCallback(async (text: string, conversationId: string | null, interests: string[] = []): Promise<{ content: string; sources?: any[]; conversationId: string; suggestedRouteId?: string } | null> => {
     const userMsg: Message = {
       id: crypto.randomUUID(),
       role: "user",
@@ -41,7 +41,7 @@ export function useChat() {
       setIsThinking(false);
       abortRef.current = null;
 
-      return { content: data.message.content, sources: data.message.sources, conversationId: data.conversation_id };
+      return { content: data.message.content, sources: data.message.sources, conversationId: data.conversation_id, suggestedRouteId: data.message.suggested_route_id };
     } catch (err: any) {
       setIsThinking(false);
       abortRef.current = null;

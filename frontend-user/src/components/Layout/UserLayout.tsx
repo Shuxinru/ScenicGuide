@@ -1,10 +1,13 @@
 import { useState, useCallback, useEffect } from "react";
 import DigitalHumanPanel from "../DigitalHuman/DigitalHumanPanel";
 import ChatPanel from "../Chat/ChatPanel";
+import LingshanMap from "../Map/LingshanMap";
 import { useSpeechRecognition } from "../../hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "../../hooks/useSpeechSynthesis";
 import { useLive2D } from "../../hooks/useLive2D";
 import { useChat } from "../../hooks/useChat";
+import useMapStore from "../../store/mapStore";
+import useMapNarration from "../../hooks/useMapNarration";
 import { chatStore } from "../../store/chatStore";
 import { getConversationMessages } from "../../api/tourist";
 import apiClient from "../../api/client";
@@ -13,7 +16,7 @@ import type { Message } from "../../types/chat";
 export default function UserLayout() {
   const [interests, setInterests] = useState<string[]>([]);
   const [clothingUrl, setClothingUrl] = useState<string | null>(null);
-  const [voiceName, setVoiceName] = useState<string>("zh-CN-XiaoxiaoNeural");
+  const [voiceName, setVoiceName] = useState<string>("voice-0");
   const [voiceSpeed, setVoiceSpeed] = useState<number>(1.0);
   const [voicePitch, setVoicePitch] = useState<number>(1.0);
 
@@ -23,6 +26,20 @@ export default function UserLayout() {
   const { mouthOpen, expression, setMouthByChar, startSpeaking, stopSpeaking, setEmotion } = useLive2D();
 
   const conversationId = chatStore((s) => s.conversationId);
+
+  // Map state
+  const selectedSpotId = useMapStore((s) => s.selectedSpotId);
+  const selectedRouteId = useMapStore((s) => s.selectedRouteId);
+  const selectRoute = useMapStore((s) => s.selectRoute);
+  const selectSpot = useMapStore((s) => s.selectSpot);
+
+  // Click spot name in chat → fly map to that spot
+  const handleSpotNameClick = useCallback(
+    (spotId: string) => {
+      selectSpot(spotId);
+    },
+    [selectSpot]
+  );
 
   // Handle voice toggle
   const handleMicToggle = useCallback(() => {
@@ -48,6 +65,9 @@ export default function UserLayout() {
       }
 
       const content = result.content;
+      if (result.suggestedRouteId) {
+        selectRoute(result.suggestedRouteId);
+      }
       if (content.includes("欢迎") || content.includes("高兴") || content.includes("感谢") || content.includes("谢谢") || content.includes("很棒")) {
         setEmotion("thankful");
       } else if (content.includes("抱歉") || content.includes("对不起") || content.includes("遗憾")) {
@@ -56,8 +76,10 @@ export default function UserLayout() {
         setEmotion("surprised");
       }
     },
-    [sendMessage, stopSpeak, clearTranscript, setEmotion, interests]
+    [sendMessage, stopSpeak, clearTranscript, setEmotion, interests, selectRoute]
   );
+
+  const { handleSpotClick, handleRouteSelect } = useMapNarration(handleSend);
 
   // New conversation
   const handleNewChat = useCallback(() => {
@@ -135,7 +157,7 @@ export default function UserLayout() {
   useEffect(() => {
     apiClient.get("/avatar/config").then((res) => {
       setClothingUrl(res.data.clothing_url || null);
-      setVoiceName(res.data.voice_name || "zh-CN-XiaoxiaoNeural");
+      setVoiceName(res.data.voice_name || "voice-0");
       setVoiceSpeed(res.data.voice_speed || 1.0);
       setVoicePitch(res.data.voice_pitch || 1.0);
     }).catch(() => {});
@@ -154,14 +176,24 @@ export default function UserLayout() {
   return (
     <div className="user-layout">
       <div className="avatar-section">
-        <DigitalHumanPanel
-          isSpeaking={isSpeaking}
-          isThinking={isThinking}
-          isListening={isListening}
-          mouthOpen={mouthOpen}
-          expression={expression}
-          clothingUrl={clothingUrl}
-        />
+        <div className="avatar-top">
+          <DigitalHumanPanel
+            isSpeaking={isSpeaking}
+            isThinking={isThinking}
+            isListening={isListening}
+            mouthOpen={mouthOpen}
+            expression={expression}
+            clothingUrl={clothingUrl}
+          />
+        </div>
+        <div className="avatar-map">
+          <LingshanMap
+            activeRouteId={selectedRouteId}
+            highlightedSpotId={selectedSpotId}
+            onSpotClick={handleSpotClick}
+            onRouteSelect={handleRouteSelect}
+          />
+        </div>
       </div>
       <div className="chat-section">
         <ChatPanel
@@ -181,6 +213,9 @@ export default function UserLayout() {
           voiceSupported={voiceSupported}
           voiceError={voiceError}
           playback={playback}
+          activeRouteId={selectedRouteId}
+          onMapRouteSelect={handleRouteSelect}
+          onSpotNameClick={handleSpotNameClick}
         />
       </div>
     </div>

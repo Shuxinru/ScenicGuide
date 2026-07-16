@@ -8,6 +8,7 @@ import AvatarConfigPage from "./pages/AvatarConfigPage";
 import FeedbackPage from "./pages/FeedbackPage";
 import SettingsPage from "./pages/SettingsPage";
 import UsersPage from "./pages/UsersPage";
+import ConsumptionPage from "./pages/ConsumptionPage";
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem("admin_token");
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="feedback" element={<FeedbackPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="users" element={<UsersPage />} />
+        <Route path="consumption" element={<ConsumptionPage />} />
       </Route>
     </Routes>
   );

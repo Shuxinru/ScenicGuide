@@ -38,16 +38,17 @@ body {
   align-items: center;
   justify-content: center;
   height: 100%;
-  gap: 4px;
+  gap: 0;
 }
 
 .live2d-container {
   width: 100%;
   max-width: 380px;
   aspect-ratio: 4 / 5;
-  max-height: 100%;
+  max-height: calc(100% - 41px);
   position: relative;
-  margin: 0 auto;
+  margin: 0 auto -55px;
+  flex-shrink: 1;
 }
 
 .status-indicator {
@@ -59,6 +60,8 @@ body {
   background: rgba(255, 255, 255, 0.06);
   font-size: 13px;
   color: rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
+  z-index: 1;
 }
 
 .status-dot {
@@ -89,18 +92,31 @@ body {
   50% { opacity: 0.4; transform: scale(1.5); }
 }
 
-/* Avatar Section */
+/* Avatar Section — left column, vertical stack */
 .avatar-section {
   flex: 0 0 38%;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   background: linear-gradient(180deg, #0d1f3c 0%, #0a1628 100%);
   border-radius: 20px;
   position: relative;
   min-width: 0;
-  padding: 16px 40px;
   overflow: hidden;
+}
+
+.avatar-top {
+  flex: 0 0 55%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 20px 16px;
+  min-height: 0;
+}
+
+.avatar-map {
+  flex: 1;
+  min-height: 0;
+  padding: 0 8px 8px;
 }
 
 /* Chat Section */
@@ -269,6 +285,20 @@ body {
   line-height: 1.6;
 }
 
+.spot-name-link {
+  color: #f59e0b;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dashed;
+  text-underline-offset: 3px;
+  transition: color 0.2s;
+}
+
+.spot-name-link:hover {
+  color: #fbbf24;
+  text-decoration-style: solid;
+}
+
 .bubble-sources {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.35);
@@ -343,7 +373,7 @@ body {
 
 /* Interest Bar (compact, above input) */
 .interest-bar {
-  padding: 6px 12px 0;
+  padding: 8px 12px 2px;
   border-top: 1px solid rgba(255, 215, 150, 0.25);
   flex-shrink: 0;
 }
@@ -365,9 +395,9 @@ body {
 /* Quick Actions */
 .quick-actions {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   justify-content: center;
-  padding: 6px 12px 0;
+  padding: 8px 12px 2px;
   flex-shrink: 0;
 }
 
@@ -403,7 +433,7 @@ body {
 
 /* Input Bar */
 .chat-input-bar {
-  padding: 4px 12px 8px;
+  padding: 8px 12px 10px;
   background: #0d1f3c;
   flex-shrink: 0;
 }

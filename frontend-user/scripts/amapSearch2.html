@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Amap POI Search</title>
+<style>body{font-family:monospace;padding:20px}</style></head>
+<body>
+<div id="status">Loading...</div>
+<div id="results"></div>
+<script>
+window._AMapSecurityConfig = { serviceHost: "/_AMapService" };
+var s = document.createElement("script");
+s.src = "https://webapi.amap.com/maps?v=2.0&key=d1f15ad3fdf0c704434eaf23c7c18698&plugin=AMap.PlaceSearch";
+s.onload = function() {
+  document.getElementById("status").textContent = "API loaded";
+  var results = [];
+  // Search broader terms first
+  var queries = ["灵山胜境", "灵山大佛景区", "灵山梵宫", "九龙灌浴", "五印坛城", "祥符禅寺"];
+  var idx = 0;
+  function next() {
+    if (idx >= queries.length) {
+      document.getElementById("status").textContent = "DONE";
+      document.getElementById("results").innerHTML = "<pre>" + JSON.stringify(results,null,2) + "</pre>";
+      return;
+    }
+    var q = queries[idx];
+    document.getElementById("status").textContent = "Searching: " + q;
+    new AMap.PlaceSearch({city:"无锡",pageSize:10,extensions:"all"}).search(q, function(status, res) {
+      if (status === "complete" && res.pois && res.pois.length > 0) {
+        for (var i = 0; i < Math.min(res.pois.length, 5); i++) {
+          var p = res.pois[i];
+          results.push({query: q, name: p.name, lat: p.location.lat, lng: p.location.lng, address: p.address||"", type: p.type||""});
+        }
+      } else {
+        results.push({query: q, name: "NOT FOUND", lat: null, lng: null});
+      }
+      idx++; next();
+    });
+  }
+  next();
+};
+document.head.appendChild(s);
+</script></body></html>

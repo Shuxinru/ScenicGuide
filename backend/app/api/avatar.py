@@ -29,7 +29,7 @@ async def get_avatar_config(db: AsyncSession = Depends(get_db)):
             greeting_msg="您好！我是景区AI导览助手，有什么可以帮您的？",
             persona_prompt="你是一个热情、知识渊博的景区导览助手。请用简洁友好的中文回答游客的问题。",
             tone="friendly",
-            voice_name="zh-CN-XiaoxiaoNeural",
+            voice_name="voice-0",
             voice_speed=1.0,
             voice_pitch=1.0,
         )
@@ -91,7 +91,7 @@ async def upload_clothing_image(
             greeting_msg="您好！我是景区AI导览助手，有什么可以帮您的？",
             persona_prompt="你是一个热情、知识渊博的景区导览助手。请用简洁友好的中文回答游客的问题。",
             tone="friendly",
-            voice_name="zh-CN-XiaoxiaoNeural",
+            voice_name="voice-0",
             voice_speed=1.0,
             voice_pitch=1.0,
             clothing_url=clothing_url,

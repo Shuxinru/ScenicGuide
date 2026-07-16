@@ -1,14 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Tabs, Card } from "antd";
 import DocumentUpload from "../components/Knowledge/DocumentUpload";
 import DocumentList from "../components/Knowledge/DocumentList";
 import DocumentEditor from "../components/Knowledge/DocumentEditor";
 import ChunkPreview from "../components/Knowledge/ChunkPreview";
 import QAPairTable from "./QAPairPage";
-import { DocumentItem } from "../api/knowledge";
+import { DocumentItem, getDocument } from "../api/knowledge";
 import apiClient from "../api/client";
 
 export default function KnowledgePage() {
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("documents");
 
   // Document editing state
@@ -23,6 +25,19 @@ export default function KnowledgePage() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleRefresh = () => setRefreshKey((k) => k + 1);
+
+  // Auto-open document from URL param (linked from SettingsPage)
+  useEffect(() => {
+    const docId = searchParams.get("doc");
+    if (!docId) return;
+    getDocument(docId)
+      .then((doc) => {
+        setChunkDocId(doc.id);
+        setChunkDocTitle(doc.title);
+        setChunkDrawerOpen(true);
+      })
+      .catch(() => {});
+  }, [searchParams]);
 
   const handleEditDocument = (doc: DocumentItem) => {
     setEditingDocId(doc.id);

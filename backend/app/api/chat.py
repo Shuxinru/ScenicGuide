@@ -135,6 +135,7 @@ async def chat_send(
             "role": "assistant",
             "content": rag_result["content"],
             "sources": rag_result["sources"],
+            "suggested_route_id": rag_result.get("suggested_route_id"),
         },
     )
 
@@ -292,6 +293,7 @@ async def chat_websocket(websocket: WebSocket, conversation_id: str):
                         "role": "assistant",
                         "content": content,
                         "sources": rag_result["sources"],
+                        "suggested_route_id": rag_result.get("suggested_route_id"),
                     },
                 })
 

@@ -1,20 +1,17 @@
+import os
 import chromadb
-from chromadb.config import Settings as ChromaSettings
 
 from app.config import settings as app_settings
 
 _chroma_client = None
 
 
-def get_chroma_client() -> chromadb.Client:
+def get_chroma_client() -> chromadb.PersistentClient:
     global _chroma_client
     if _chroma_client is None:
-        _chroma_client = chromadb.Client(
-            ChromaSettings(
-                persist_directory=app_settings.chroma_persist_dir,
-                anonymized_telemetry=False,
-            )
-        )
+        persist_dir = app_settings.chroma_persist_dir
+        os.makedirs(persist_dir, exist_ok=True)
+        _chroma_client = chromadb.PersistentClient(path=persist_dir)
     return _chroma_client
 
 

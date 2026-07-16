@@ -13,7 +13,7 @@ import {
   Row,
   Col,
   Typography,
-  Divider,
+  Tabs,
   Alert,
   Space,
   Descriptions,
@@ -32,12 +32,48 @@ import { getAvatarConfig, updateAvatarConfig, uploadClothingImage, clearClothing
 const { TextArea } = Input;
 const { Title, Text } = Typography;
 
+const styleColors: Record<string, string> = {
+  "古风": "linear-gradient(135deg, #2d1b0e 0%, #5c3a1e 100%)",
+  "现代": "linear-gradient(135deg, #1a3a5c 0%, #2d6aa0 100%)",
+  "卡通": "linear-gradient(135deg, #6b1d5e 0%, #c04ca8 100%)",
+};
+
+function AvatarPreview({ style }: { style: string }) {
+  const bg = styleColors[style] || styleColors["现代"];
+  return (
+    <div
+      style={{
+        width: 160,
+        height: 160,
+        borderRadius: "50%",
+        background: bg,
+        margin: "0 auto",
+        overflow: "hidden",
+        border: "3px solid rgba(255,255,255,0.2)",
+        boxShadow: "0 0 20px rgba(0,0,0,0.3)",
+      }}
+    >
+      <img
+        src="/avatar.png"
+        alt="数字人"
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          objectPosition: "50% 20%",
+        }}
+      />
+    </div>
+  );
+}
+
 export default function AvatarConfigPage() {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingClothing, setUploadingClothing] = useState(false);
   const [config, setConfig] = useState<AvatarConfig | null>(null);
+  const [activeTab, setActiveTab] = useState("appearance");
 
   const fetchConfig = async () => {
     setLoading(true);
@@ -141,16 +177,21 @@ export default function AvatarConfigPage() {
   ];
 
   const voiceOptions = [
-    { value: "zh-CN-XiaoxiaoNeural", label: "晓晓 (女, 稳重)" },
-    { value: "zh-CN-XiaochenNeural", label: "晓辰 (女, 活泼)" },
-    { value: "zh-CN-XiaohanNeural", label: "晓涵 (女, 灵动)" },
-    { value: "zh-CN-XiaoruiNeural", label: "晓睿 (女, 清亮)" },
-    { value: "zh-CN-XiaomoNeural", label: "晓墨 (女, 知性)" },
-    { value: "zh-CN-XiaoxuanNeural", label: "晓萱 (女, 亲切)" },
-    { value: "zh-CN-YunxiNeural", label: "云希 (男, 清亮)" },
-    { value: "zh-CN-YunyangNeural", label: "云扬 (男, 阳光)" },
-    { value: "zh-CN-YunxiaNeural", label: "云夏 (男, 稳重)" },
+    { value: "voice-0", label: "温柔女声", pitch: 1.00, speed: 0.90 },
+    { value: "voice-1", label: "清亮女声", pitch: 1.15, speed: 1.00 },
+    { value: "voice-2", label: "知性女声", pitch: 0.85, speed: 0.95 },
+    { value: "voice-3", label: "活泼女声", pitch: 1.25, speed: 1.10 },
   ];
+
+  const handleVoiceChange = (value: string) => {
+    const profile = voiceOptions.find((v) => v.value === value);
+    if (profile) {
+      form.setFieldsValue({
+        voice_speed: profile.speed,
+        voice_pitch: profile.pitch,
+      });
+    }
+  };
 
   const styleOptions = [
     { value: "古风", label: "古风" },
@@ -180,23 +221,9 @@ export default function AvatarConfigPage() {
       >
         <Row gutter={24} align="middle">
           <Col xs={24} md={8} style={{ textAlign: "center" }}>
-            <div
-              style={{
-                width: 160,
-                height: 160,
-                borderRadius: "50%",
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                margin: "0 auto",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 48,
-              }}
-            >
-              <UserOutlined style={{ color: "#fff", fontSize: 64 }} />
-            </div>
+            <AvatarPreview style={config?.style || "现代"} />
             <Title level={5} style={{ marginTop: 12 }}>
-              {config?.style || "现代"} 风格数字人
+              数字人
             </Title>
           </Col>
           <Col xs={24} md={16}>
@@ -224,7 +251,9 @@ export default function AvatarConfigPage() {
                 </Text>
               </Descriptions.Item>
               <Descriptions.Item label="语音">
-                <Text>{config?.voice_name || "未设置"}</Text>
+                <Text>
+                  {voiceOptions.find((v) => v.value === config?.voice_name)?.label || config?.voice_name || "未设置"}
+                </Text>
               </Descriptions.Item>
               <Descriptions.Item label="最后更新">
                 <Text>{config?.updated_at || "从未"}</Text>
@@ -258,170 +287,179 @@ export default function AvatarConfigPage() {
           </Space>
         }
       >
+        <Alert
+          message="修改配置后请点击「保存配置」按钮，配置将在下次对话中生效"
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+
         <Form form={form} layout="vertical" style={{ maxWidth: 800 }}>
-          <Alert
-            message="修改配置后请点击「保存配置」按钮，配置将在下次对话中生效"
-            type="info"
-            showIcon
-            style={{ marginBottom: 24 }}
-          />
+          <Tabs activeKey={activeTab} onChange={setActiveTab} items={[
+            {
+              key: "appearance",
+              label: "外观风格",
+              children: (
+                <>
+                  <Form.Item
+                    name="style"
+                    label="数字人风格"
+                    rules={[{ required: true, message: "请选择数字人风格" }]}
+                  >
+                    <Radio.Group optionType="button" buttonStyle="solid">
+                      {styleOptions.map((opt) => (
+                        <Radio.Button key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </Radio.Button>
+                      ))}
+                    </Radio.Group>
+                  </Form.Item>
 
-          <Divider orientation="left">外观风格</Divider>
+                  <Form.Item name="model_path" label="模型文件 (.model3.json)">
+                    <Upload {...uploadProps}>
+                      <Button icon={<UploadOutlined />}>上传模型文件</Button>
+                    </Upload>
+                  </Form.Item>
 
-          <Form.Item
-            name="style"
-            label="数字人风格"
-            rules={[{ required: true, message: "请选择数字人风格" }]}
-          >
-            <Radio.Group optionType="button" buttonStyle="solid">
-              {styleOptions.map((opt) => (
-                <Radio.Button key={opt.value} value={opt.value}>
-                  {opt.label}
-                </Radio.Button>
-              ))}
-            </Radio.Group>
-          </Form.Item>
+                  <Form.Item label="数字人服装图片">
+                    <Space direction="vertical" style={{ width: "100%" }}>
+                      <Upload
+                        accept=".png,.jpg,.jpeg,.webp"
+                        maxCount={1}
+                        showUploadList={false}
+                        beforeUpload={handleClothingUpload}
+                      >
+                        <Button icon={<PictureOutlined />} loading={uploadingClothing}>
+                          {config?.clothing_url ? "更换服装图片" : "上传服装图片"}
+                        </Button>
+                      </Upload>
+                      {config?.clothing_url && (
+                        <Button
+                          danger
+                          onClick={handleClearClothing}
+                          loading={uploadingClothing}
+                        >
+                          一键清除服饰
+                        </Button>
+                      )}
+                      {config?.clothing_url && (
+                        <div
+                          style={{
+                            width: 120,
+                            height: 120,
+                            border: "1px solid rgba(255,255,255,0.1)",
+                            borderRadius: 8,
+                            overflow: "hidden",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            background: "rgba(255,255,255,0.04)",
+                          }}
+                        >
+                          <img
+                            src={config.clothing_url}
+                            alt="服装预览"
+                            style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+                          />
+                        </div>
+                      )}
+                      <Text type="secondary" style={{ fontSize: 12 }}>
+                        建议上传透明背景 PNG 图片，服装会自动贴合数字人身体
+                      </Text>
+                    </Space>
+                  </Form.Item>
+                </>
+              ),
+            },
+            {
+              key: "dialogue",
+              label: "对话设置",
+              children: (
+                <>
+                  <Form.Item
+                    name="greeting_msg"
+                    label="欢迎语"
+                    rules={[{ required: true, message: "请输入欢迎语" }]}
+                  >
+                    <TextArea
+                      rows={3}
+                      placeholder="例如：您好！欢迎来到XX景区，我是您的AI导游，请问有什么可以帮您的？"
+                      showCount
+                      maxLength={200}
+                    />
+                  </Form.Item>
 
-          <Form.Item name="model_path" label="模型文件 (.model3.json)">
-            <Upload {...uploadProps}>
-              <Button icon={<UploadOutlined />}>上传模型文件</Button>
-            </Upload>
-          </Form.Item>
-
-          <Form.Item label="数字人服装图片">
-            <Space direction="vertical" style={{ width: "100%" }}>
-              <Upload
-                accept=".png,.jpg,.jpeg,.webp"
-                maxCount={1}
-                showUploadList={false}
-                beforeUpload={handleClothingUpload}
-              >
-                <Button icon={<PictureOutlined />} loading={uploadingClothing}>
-                  {config?.clothing_url ? "更换服装图片" : "上传服装图片"}
-                </Button>
-              </Upload>
-              {config?.clothing_url && (
-                <Button
-                  danger
-                  onClick={handleClearClothing}
-                  loading={uploadingClothing}
-                >
-                  一键清除服饰
-                </Button>
-              )}
-              {config?.clothing_url && (
-                <div
-                  style={{
-                    width: 120,
-                    height: 120,
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    borderRadius: 8,
-                    overflow: "hidden",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: "rgba(255,255,255,0.04)",
-                  }}
-                >
-                  <img
-                    src={config.clothing_url}
-                    alt="服装预览"
-                    style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
-                  />
-                </div>
-              )}
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                建议上传透明背景 PNG 图片，服装会自动贴合数字人身体
-              </Text>
-            </Space>
-          </Form.Item>
-
-          <Divider orientation="left">对话设置</Divider>
-
-          <Form.Item
-            name="greeting_msg"
-            label="欢迎语"
-            rules={[{ required: true, message: "请输入欢迎语" }]}
-          >
-            <TextArea
-              rows={3}
-              placeholder="例如：您好！欢迎来到XX景区，我是您的AI导游，请问有什么可以帮您的？"
-              showCount
-              maxLength={200}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="persona_prompt"
-            label="人设提示词"
-            rules={[{ required: true, message: "请输入人设提示词" }]}
-          >
-            <TextArea
-              rows={8}
-              placeholder={`你是一个专业的景区导游数字人。你需要：
+                  <Form.Item
+                    name="persona_prompt"
+                    label="人设提示词"
+                    rules={[{ required: true, message: "请输入人设提示词" }]}
+                  >
+                    <TextArea
+                      rows={8}
+                      placeholder={`你是一个专业的景区导游数字人。你需要：
 1. 友好热情地接待每一位游客
 2. 准确介绍景区的历史文化和景点信息
 3. 根据游客需求推荐最佳游览路线
 4. 回答游客关于餐饮、住宿、交通等问题
 ...`}
-              showCount
-              maxLength={2000}
-              style={{ fontFamily: "monospace" }}
-            />
-          </Form.Item>
+                      showCount
+                      maxLength={2000}
+                      style={{ fontFamily: "monospace" }}
+                    />
+                  </Form.Item>
 
-          <Form.Item
-            name="tone"
-            label="语气风格"
-            rules={[{ required: true, message: "请选择语气风格" }]}
-          >
-            <Select options={toneOptions} placeholder="选择语气风格" />
-          </Form.Item>
+                  <Form.Item
+                    name="tone"
+                    label="语气风格"
+                    rules={[{ required: true, message: "请选择语气风格" }]}
+                  >
+                    <Select options={toneOptions} placeholder="选择语气风格" />
+                  </Form.Item>
+                </>
+              ),
+            },
+            {
+              key: "voice",
+              label: "语音设置",
+              children: (
+                <>
+                  <Form.Item
+                    name="voice_name"
+                    label="语音方案"
+                    rules={[{ required: true, message: "请选择语音方案" }]}
+                  >
+                    <Select
+                      options={voiceOptions}
+                      placeholder="选择语音方案"
+                      showSearch
+                      optionFilterProp="label"
+                      onChange={handleVoiceChange}
+                    />
+                  </Form.Item>
 
-          <Divider orientation="left">语音设置</Divider>
+                  <Form.Item name="voice_speed" label="语速">
+                    <Slider
+                      min={0.5}
+                      max={2.0}
+                      step={0.1}
+                      marks={{ 0.5: "0.5x", 1.0: "1.0x", 1.5: "1.5x", 2.0: "2.0x" }}
+                      tooltip={{ formatter: (val) => `${val}x` }}
+                    />
+                  </Form.Item>
 
-          <Form.Item
-            name="voice_name"
-            label="语音方案"
-            rules={[{ required: true, message: "请选择语音方案" }]}
-          >
-            <Select
-              options={voiceOptions}
-              placeholder="选择语音方案"
-              showSearch
-              optionFilterProp="label"
-            />
-          </Form.Item>
-
-          <Form.Item name="voice_speed" label="语速">
-            <Slider
-              min={0.5}
-              max={2.0}
-              step={0.1}
-              marks={{
-                0.5: "0.5x",
-                1.0: "1.0x",
-                1.5: "1.5x",
-                2.0: "2.0x",
-              }}
-              tooltip={{ formatter: (val) => `${val}x` }}
-            />
-          </Form.Item>
-
-          <Form.Item name="voice_pitch" label="音调">
-            <Slider
-              min={0.5}
-              max={2.0}
-              step={0.1}
-              marks={{
-                0.5: "低",
-                1.0: "中",
-                1.5: "高",
-                2.0: "最高",
-              }}
-              tooltip={{ formatter: (val) => `${val}` }}
-            />
-          </Form.Item>
+                  <Form.Item name="voice_pitch" label="音调">
+                    <Slider
+                      min={0.5}
+                      max={2.0}
+                      step={0.1}
+                      marks={{ 0.5: "低", 1.0: "中", 1.5: "高", 2.0: "最高" }}
+                      tooltip={{ formatter: (val) => `${val}` }}
+                    />
+                  </Form.Item>
+                </>
+              ),
+            },
+          ]} />
         </Form>
       </Card>
     </>

@@ -11,11 +11,12 @@ interface StatCardProps {
 
 const colorMap: Record<string, string> = {
   blue: "#1677ff",
-  green: "#52c41a",
-  orange: "#fa8c16",
+  green: "#22d3bb",
+  orange: "#f97316",
   red: "#f5222d",
-  purple: "#722ed1",
-  cyan: "#13c2c2",
+  purple: "#a855f7",
+  cyan: "#00d4ff",
+  gold: "#f59e0b",
 };
 
 export default function StatCard({
@@ -26,20 +27,24 @@ export default function StatCard({
   color = "blue",
   loading = false,
 }: StatCardProps) {
-  const borderColor = colorMap[color] || color || colorMap.blue;
+  const accent = colorMap[color] || color || colorMap.blue;
 
   return (
     <Card
       loading={loading}
-      style={{ borderTop: `3px solid ${borderColor}`, height: "100%" }}
-      bodyStyle={{ padding: "20px 24px" }}
+      styles={{ body: { padding: "12px 16px" } }}
+      style={{
+        height: "100%",
+        borderLeft: `3px solid ${accent}`,
+        borderRadius: 8,
+      }}
     >
       <Statistic
-        title={title}
+        title={<span style={{ color: "#64748b", fontSize: 12, fontWeight: 500 }}>{title}</span>}
         value={value}
-        suffix={suffix}
+        suffix={<span style={{ fontSize: 14, color: "#94a3b8" }}>{suffix}</span>}
         prefix={prefix}
-        valueStyle={{ fontSize: 28, fontWeight: 600 }}
+        valueStyle={{ fontSize: 26, fontWeight: 700, color: "#1e293b" }}
       />
     </Card>
   );

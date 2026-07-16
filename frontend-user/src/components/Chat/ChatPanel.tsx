@@ -34,6 +34,9 @@ interface Props {
   voiceSupported: boolean;
   voiceError: string | null;
   playback: PlaybackControls;
+  activeRouteId: string | null;
+  onMapRouteSelect: (routeId: string) => void;
+  onSpotNameClick?: (spotId: string) => void;
 }
 
 export default function ChatPanel({
@@ -53,6 +56,9 @@ export default function ChatPanel({
   voiceSupported,
   voiceError,
   playback,
+  activeRouteId,
+  onMapRouteSelect,
+  onSpotNameClick,
 }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -111,6 +117,7 @@ export default function ChatPanel({
               onPause={playback.onPause}
               onResume={playback.onResume}
               onStop={playback.onStop}
+              onSpotNameClick={onSpotNameClick}
             />
           ))
         )}

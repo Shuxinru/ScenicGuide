@@ -1,7 +1,10 @@
 import asyncio
 import json
+import logging
 import re
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from sqlalchemy import select, text as sa_text, or_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -237,13 +240,53 @@ async def _query_scenic_data(db: AsyncSession, question: str) -> str:
 
     data_parts = []
 
+    # --- Phase 0: Direct spot name match via n-grams ---
+    # Extract potential spot names (2-5 char n-grams) from cleaned question
+    cleaned_q = re.sub(r'[？?。，,！!、\s\[\]【】\'\"（）()]+', '', question)
+    cleaned_q = re.sub(
+        r'(请问|请|帮我|给我|介绍一下|是什么|怎么样|如何|有没有|哪里|在哪|怎么|的情况|包括|和|等|以及|还有|告诉我|讲一下|说说)',
+        '', cleaned_q,
+    )
+    spot_candidates: list[str] = []
+    # Iterate from shorter to longer: 2-4 char n-grams are more likely exact spot names
+    for n in [2, 3, 4, 5]:
+        for i in range(len(cleaned_q) - n + 1):
+            cand = cleaned_q[i:i + n]
+            if cand not in spot_candidates:
+                spot_candidates.append(cand)
+    # Use up to 30 candidates; shorter n-grams are prioritized for spot name matching
+
+    if spot_candidates:
+        try:
+            spot_conds = " OR ".join(
+                [f"spot_name LIKE :sc_{i}" for i in range(len(spot_candidates))]
+            )
+            spot_params = {
+                f"sc_{i}": f"%{c}%" for i, c in enumerate(spot_candidates)
+            }
+            spot_query = sa_text(
+                f"SELECT scenic_area_name, spot_name, location, detailed_intro, highlights, open_info, cultural_connotation "
+                f"FROM scenic_spots WHERE {spot_conds} LIMIT 5"
+            )
+            spot_result = await db.execute(spot_query, spot_params)
+            spot_rows = spot_result.fetchall()
+            if spot_rows:
+                items = []
+                for row in spot_rows:
+                    item_dict = dict(row._mapping)
+                    item_dict = {k: v for k, v in item_dict.items() if v is not None}
+                    items.append(json.dumps(item_dict, ensure_ascii=False, default=str))
+                data_parts.append("【景点信息（精确匹配）】\n" + "\n".join(items))
+        except Exception as e:
+            logger.warning("Phase 0 spot match failed: %s", e)
+
     # Define all scenic tables and their searchable columns
     table_configs = [
         {
             "table": "scenic_spots",
             "label": "景点信息",
-            "columns": ["spot_name", "detailed_intro", "highlights", "cultural_connotation", "core_function", "location", "open_info"],
-            "display_cols": "spot_name, location, detailed_intro, highlights, open_info, cultural_connotation",
+            "columns": ["scenic_area_name", "spot_name", "detailed_intro", "highlights", "cultural_connotation", "core_function", "location", "open_info"],
+            "display_cols": "scenic_area_name, spot_name, location, detailed_intro, highlights, open_info, cultural_connotation",
         },
         {
             "table": "ticket_policies",
@@ -314,7 +357,7 @@ async def _query_scenic_data(db: AsyncSession, question: str) -> str:
 
             query = sa_text(
                 f"SELECT {config['display_cols']} FROM {config['table']} "
-                f"WHERE {where_clause} LIMIT 8"
+                f"WHERE {where_clause} LIMIT 12"
             )
 
             param_list = {}
@@ -339,10 +382,37 @@ async def _query_scenic_data(db: AsyncSession, question: str) -> str:
                 data_parts.append(f"【{config['label']}】\n" + "\n".join(items))
 
         except Exception as e:
-            # Log silently and continue to next table
-            pass
+            logger.warning("Scenic table query failed for %s: %s", config["table"], e)
 
     return "\n\n".join(data_parts)
+
+
+ROUTE_KEYWORDS = re.compile(
+    r'路线|推荐.*路|路.*推荐|游览.*线|线.*游览|怎么走|怎么逛|走.*路线|逛.*路线|'
+    r'适合.*路线|路线.*适合|亲子|历史文化|自然风光|家庭|行程|攻略|怎么玩'
+)
+
+# route_id -> matcher keywords (any match in response text = this route)
+ROUTE_SIGNALS: list[tuple[str, list[str]]] = [
+    ("历史文化爱好者", ["历史文化爱好者", "历史文化路线", "历史文化"]),
+    ("自然风光爱好者", ["自然风光爱好者", "自然风光路线", "自然风光"]),
+    ("亲子家庭", ["亲子家庭", "亲子路线", "亲子", "家庭路线", "家庭出游"]),
+]
+
+
+def _detect_route_id(question: str, response_text: str, scenic_data: str) -> str | None:
+    """Detect if the question is route-related and extract a matching route_id."""
+    if not ROUTE_KEYWORDS.search(question):
+        return None
+
+    # Check scenic data (DB results in JSON) for exact route_type first
+    combined = scenic_data + response_text
+    for route_id, signals in ROUTE_SIGNALS:
+        for sig in signals:
+            if sig in combined:
+                return route_id
+
+    return None
 
 
 async def retrieve_context(
@@ -456,7 +526,14 @@ async def generate_rag_response(
         for c in top_chunks
     ]
 
-    return {
+    # 11. Detect suggested route for map display
+    suggested_route_id = _detect_route_id(question, response_text, scenic_data)
+
+    result: dict = {
         "content": response_text,
         "sources": sources,
     }
+    if suggested_route_id:
+        result["suggested_route_id"] = suggested_route_id
+
+    return result

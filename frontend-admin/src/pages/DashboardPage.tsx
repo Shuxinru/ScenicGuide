@@ -71,12 +71,17 @@ export default function DashboardPage() {
             <StatCard title="活跃文档" value={summary?.active_documents ?? 0} />
           </Col>
 
-          <Col xs={24} md={16}>
+          <Col xs={24} md={10}>
             <Card title="游客趋势">
               <VisitorTrendChart dateFrom={dateFrom} dateTo={dateTo} />
             </Card>
           </Col>
           <Col xs={24} md={8}>
+            <Card title="对话量趋势">
+              <ConversationVolumeChart dateFrom={dateFrom} dateTo={dateTo} />
+            </Card>
+          </Col>
+          <Col xs={24} md={6}>
             <Card title="情感分析">
               <SentimentPieChart dateFrom={dateFrom} dateTo={dateTo} />
             </Card>
@@ -90,12 +95,6 @@ export default function DashboardPage() {
           <Col xs={24} md={12}>
             <Card title="高峰时段">
               <PeakTimesHeatmap dateFrom={dateFrom} dateTo={dateTo} />
-            </Card>
-          </Col>
-
-          <Col span={24}>
-            <Card title="对话量趋势">
-              <ConversationVolumeChart dateFrom={dateFrom} dateTo={dateTo} />
             </Card>
           </Col>
         </Row>

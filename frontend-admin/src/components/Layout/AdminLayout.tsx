@@ -10,16 +10,18 @@ import {
   SettingOutlined,
   LogoutOutlined,
   TeamOutlined,
+  MoneyCollectOutlined,
 } from "@ant-design/icons";
 
 const { Header, Sider, Content } = Layout;
 
 const menuItems = [
   { key: "/", icon: <DashboardOutlined />, label: "数据大屏" },
-  { key: "/knowledge", icon: <BookOutlined />, label: "知识库管理" },
-  { key: "/qa-pairs", icon: <QuestionCircleOutlined />, label: "问答对管理" },
-  { key: "/avatar", icon: <UserOutlined />, label: "数字人配置" },
+  { key: "/consumption", icon: <MoneyCollectOutlined />, label: "消费分析" },
   { key: "/feedback", icon: <SmileOutlined />, label: "游客反馈" },
+  { key: "/avatar", icon: <UserOutlined />, label: "数字人配置" },
+  { key: "/qa-pairs", icon: <QuestionCircleOutlined />, label: "问答对管理" },
+  { key: "/knowledge", icon: <BookOutlined />, label: "知识库管理" },
   { key: "/settings", icon: <SettingOutlined />, label: "景区设置" },
   { key: "/users", icon: <TeamOutlined />, label: "账号管理" },
 ];

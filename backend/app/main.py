@@ -1,4 +1,8 @@
 import os
+
+os.environ.setdefault("HF_HUB_OFFLINE", "1")
+os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+
 import uuid
 from contextlib import asynccontextmanager
 
@@ -18,6 +22,7 @@ import app.models.avatar  # noqa
 import app.models.analytics  # noqa
 import app.models.admin  # noqa
 import app.models.settings  # noqa
+import app.models.tourist_behavior  # noqa
 
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)

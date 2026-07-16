@@ -5,11 +5,9 @@ class EmbeddingService:
     """Local embedding service using Sentence Transformers."""
 
     def __init__(self):
-        import os
-        os.environ.setdefault("HF_HUB_OFFLINE", "1")
         self.model = SentenceTransformer(
             "paraphrase-multilingual-MiniLM-L12-v2",
-            local_files_only=False,
+            local_files_only=True,
         )
 
     def embed_texts(self, texts: list[str]) -> list[list[float]]:
